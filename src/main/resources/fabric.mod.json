@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "calcinhaminimalista",
+	"version": "${version}",
+	"name": "calcinhaminimalista",
+	"description": "Você já viu este homem?",
+	"authors": [
+		"BobSponja Calça Quadrada"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/calcinhaminimalista/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"client": [
+			"com.calcinhaminimalista.CalcinhaMinimalista"
+		],
+		"modmenu": [
+			"com.calcinhaminimalista.SapoModMenu"
+		]
+	},
+	"mixins": [
+		"calcinhaminimalista.mixins.json",
+		{
+			"config": "calcinhaminimalista.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
