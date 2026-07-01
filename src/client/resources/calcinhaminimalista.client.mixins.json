@@ -3,7 +3,8 @@
 	"package": "com.calcinhaminimalista.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"ExampleClientMixin"
+		"ExampleClientMixin",
+		"OuvidoSapoMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

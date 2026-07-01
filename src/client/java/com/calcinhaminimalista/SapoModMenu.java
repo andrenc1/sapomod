@@ -38,6 +38,35 @@ public class SapoModMenu implements ModMenuApi {
                     .setSaveConsumer(newValue -> Config.maxCroac = newValue)
                     .build());
 
+            ConfigCategory alertas = builder.getOrCreateCategory(Component.literal("Alertas"));
+
+            alertas.addEntry(entryBuilder.startBooleanToggle(Component.literal("Modo Vivo ou Morto"), Config.modoVivoOuMorto)
+                    .setDefaultValue(false)
+                    .setSaveConsumer(newValue -> Config.modoVivoOuMorto = newValue)
+                    .build());
+
+            alertas.addEntry(entryBuilder.startStrField(Component.literal("Texto(s) Gatilho(s) (use vírgula)"), Config.textoGatilho)
+                    .setDefaultValue("")
+                    .setSaveConsumer(newValue -> Config.textoGatilho = newValue)
+                    .build());
+
+            alertas.addEntry(entryBuilder.startStrField(Component.literal("Mensagem de Alerta na Tela"), Config.textoAlerta)
+                    .setDefaultValue("CUIDADO!")
+                    .setSaveConsumer(newValue -> Config.textoAlerta = newValue)
+                    .build());
+
+            alertas.addEntry(entryBuilder.startColorField(Component.literal("Cor do Alerta"), Config.alertaCor)
+                    .setDefaultValue(0xFF5555)
+                    .setSaveConsumer(newValue -> Config.alertaCor = newValue)
+                    .build());
+
+            alertas.addEntry(entryBuilder.startIntField(Component.literal("Tempo do Alerta (Segundos)"), Config.alertaTempo / 20)
+                    .setDefaultValue(5)
+                    .setMin(1)
+                    .setMax(60)
+                    .setSaveConsumer(newValue -> Config.alertaTempo = newValue * 20)
+                    .build());
+
             builder.setSavingRunnable(Config::salvar);
 
             return builder.build();
