@@ -23,6 +23,9 @@ public class Config {
     public static int alertaTempo = 100;
     public static int alertaCor = 0xFF5555;
     public static boolean modoVivoOuMorto = false;
+    public static int vivoMortoX = 50;
+    public static int vivoMortoY = 70;
+    public static float vivoMortoEscala = 2.0f;
 
     // Ferramentas para ler/escrever o JSON
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -45,6 +48,9 @@ public class Config {
                 alertaTempo = dados.alertaTempo != 0 ? dados.alertaTempo : 100;
                 alertaCor = dados.alertaCor != 0 ? dados.alertaCor : 0xFF5555;
                 modoVivoOuMorto = dados.modoVivoOuMorto;
+                vivoMortoX = dados.vivoMortoX != 0 ? dados.vivoMortoX : 50;
+                vivoMortoY = dados.vivoMortoY != 0 ? dados.vivoMortoY : 70;
+                vivoMortoEscala = dados.vivoMortoEscala != 0.0f ? dados.vivoMortoEscala : 2.0f;
             } catch (IOException e) {
                 System.out.println("Erro ao carregar as configurações do Sapo.");
             }
@@ -56,7 +62,7 @@ public class Config {
     // Método para salvar ao fechar o menu
     public static void salvar() {
         try (FileWriter escritor = new FileWriter(ARQUIVO)) {
-            SapoDados dados = new SapoDados(ativo, minCroac, maxCroac, modoDev, textoGatilho, textoAlerta, alertaX, alertaY, alertaEscala, alertaTempo, alertaCor, modoVivoOuMorto);
+            SapoDados dados = new SapoDados(ativo, minCroac, maxCroac, modoDev, textoGatilho, textoAlerta, alertaX, alertaY, alertaEscala, alertaTempo, alertaCor, modoVivoOuMorto, vivoMortoX, vivoMortoY, vivoMortoEscala);
             GSON.toJson(dados, escritor);
         } catch (IOException e) {
             System.out.println("Erro ao salvar as configurações do Sapo.");
@@ -77,8 +83,11 @@ public class Config {
         int alertaTempo;
         int alertaCor;
         boolean modoVivoOuMorto;
+        int vivoMortoX;
+        int vivoMortoY;
+        float vivoMortoEscala;
 
-        SapoDados(boolean ativo, int minCroac, int maxCroac, boolean modoDev, String textoGatilho, String textoAlerta, int alertaX, int alertaY, float alertaEscala, int alertaTempo, int alertaCor, boolean modoVivoOuMorto) {
+        SapoDados(boolean ativo, int minCroac, int maxCroac, boolean modoDev, String textoGatilho, String textoAlerta, int alertaX, int alertaY, float alertaEscala, int alertaTempo, int alertaCor, boolean modoVivoOuMorto, int vivoMortoX, int vivoMortoY, float vivoMortoEscala) {
             this.ativo = ativo;
             this.minCroac = minCroac;
             this.maxCroac = maxCroac;
@@ -91,6 +100,9 @@ public class Config {
             this.alertaTempo = alertaTempo;
             this.alertaCor = alertaCor;
             this.modoVivoOuMorto = modoVivoOuMorto;
+            this.vivoMortoX = vivoMortoX;
+            this.vivoMortoY = vivoMortoY;
+            this.vivoMortoEscala = vivoMortoEscala;
         }
     }
 }

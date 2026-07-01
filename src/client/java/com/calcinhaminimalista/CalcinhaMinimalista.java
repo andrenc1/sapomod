@@ -61,14 +61,18 @@ public class CalcinhaMinimalista implements ClientModInitializer {
 
         HudElementRegistry.addLast(Identifier.parse("calcinhaminimalista:alerta"), (graphics, tracker) -> {
             if (alertaTempoRestante > 0) {
-                String texto = Config.modoVivoOuMorto ? mensagemVivoMorto : Config.textoAlerta;
+                String texto = Config.modoVivoOuMorto && corVivoMorto != 0 ? mensagemVivoMorto : Config.textoAlerta;
                 String textFormatado = "§l" + texto;
                 int renderCor = (Config.modoVivoOuMorto && corVivoMorto != 0) ? corVivoMorto : Config.alertaCor;
                 renderCor |= 0xFF000000;
                 
+                int posX = (Config.modoVivoOuMorto && corVivoMorto != 0) ? Config.vivoMortoX : Config.alertaX;
+                int posY = (Config.modoVivoOuMorto && corVivoMorto != 0) ? Config.vivoMortoY : Config.alertaY;
+                float escala = (Config.modoVivoOuMorto && corVivoMorto != 0) ? Config.vivoMortoEscala : Config.alertaEscala;
+
                 graphics.pose().pushMatrix();
-                graphics.pose().translate(Config.alertaX, Config.alertaY);
-                graphics.pose().scale(Config.alertaEscala, Config.alertaEscala);
+                graphics.pose().translate(posX, posY);
+                graphics.pose().scale(escala, escala);
                 graphics.text(Minecraft.getInstance().font, textFormatado, 0, 0, renderCor, true);
                 graphics.pose().popMatrix();
             }
@@ -117,7 +121,19 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                 })
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("help")
                     .executes(context -> {
-                        context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Comandos:\n§e/sapo §7- Abre o Menu de Configurações\n§e/sapo help §7- Mostra essa ajuda\n§e/sapo testar §7- Testa o alerta na tela\n§e/sapo simular <texto> §7- Simula mensagem"));
+                        context.getSource().getPlayer().sendSystemMessage(Component.literal(
+                            "§a[Sapo] Comandos:\n" +
+                            "§e/sapo §7- Abre o Mod Menu\n" +
+                            "§e/sapo help §7- Mostra essa ajuda\n" +
+                            "§e/sapo editarHUD §7- Move os textos na tela\n" +
+                            "§e/sapo testar §7- Testa os alertas\n" +
+                            "§e/sapo simular <texto> §7- Simula mensagem\n" +
+                            "§e/sapo alerta <texto> §7- Muda texto do alerta\n" +
+                            "§e/sapo cor <hex> §7- Muda a cor do alerta\n" +
+                            "§e/sapo gatilho <texto> §7- Muda o gatilho\n" +
+                            "§e/sapo tempo <segs> §7- Muda o tempo\n" +
+                            "§e/sapo debug §7- Alterna logs de som"
+                        ));
                         return 1;
                     })
                 )
