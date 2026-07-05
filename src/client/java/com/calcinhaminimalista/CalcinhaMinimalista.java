@@ -11,7 +11,22 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import net.minecraft.client.Minecraft;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.Display;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.Interaction;
+import java.util.List;
 
 public class CalcinhaMinimalista implements ClientModInitializer {
     public static int alertaTempoRestante = 0;
@@ -56,6 +71,15 @@ public class CalcinhaMinimalista implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (alertaTempoRestante > 0) {
                 alertaTempoRestante--;
+            }
+
+            // Renderiza as partículas nos locais onde a luz deve ser colocada
+            if (client.level != null && !SapoPuzzle.solucaoAtiva.isEmpty()) {
+                for (BlockPos pos : SapoPuzzle.solucaoAtiva) {
+                    client.level.addParticle(ParticleTypes.HAPPY_VILLAGER, 
+                        pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, 
+                        0, 0, 0);
+                }
             }
         });
 
@@ -212,6 +236,74 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                             return 1;
                         })
                     )
+                )
+                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("resolver")
+                    .executes(context -> {
+                        Minecraft client = Minecraft.getInstance();
+                        SapoPuzzle.escanearEResolver(client);
+                        return 1;
+                    })
+                )
+                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("limpar")
+                    .executes(context -> {
+                        SapoPuzzle.solucaoAtiva.clear();
+                        context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Partículas apagadas."));
+                        return 1;
+                    })
+                )
+                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("inspecionar")
+                    .executes(context -> {
+                        Minecraft client = Minecraft.getInstance();
+                        if (client.player == null || client.level == null || client.hitResult == null) return 0;
+                        
+                        Vec3 hitPos = client.hitResult.getLocation();
+                        BlockPos blockPos = BlockPos.containing(hitPos);
+                        BlockState state = client.level.getBlockState(blockPos);
+                        
+                        Identifier blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+                        System.out.println("[Sapo Inspecionar] Bloco: " + blockId.toString());
+                        
+                        AABB box = new AABB(hitPos.x - 1.0, hitPos.y - 1.0, hitPos.z - 1.0, hitPos.x + 1.0, hitPos.y + 1.0, hitPos.z + 1.0);
+                        List<Entity> entities = client.level.getEntities(client.player, box);
+                        
+                        if (entities.isEmpty()) {
+                            System.out.println("[Sapo Inspecionar] Nenhuma entidade próxima.");
+                        } else {
+                            for (Entity entity : entities) {
+                                Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+                                String extra = "";
+                                
+                                if (entity instanceof Display.TextDisplay) {
+                                    Display.TextDisplay textDisplay = (Display.TextDisplay) entity;
+                                    if (textDisplay.getText() != null) {
+                                        extra = " - Texto: " + textDisplay.getText().getString();
+                                    }
+                                } else if (entity instanceof ArmorStand) {
+                                    ArmorStand stand = (ArmorStand) entity;
+                                    if (stand.hasCustomName()) {
+                                        extra = " - Nome: " + stand.getCustomName().getString();
+                                    }
+                                } else if (entity instanceof ItemFrame) {
+                                    ItemFrame frame = (ItemFrame) entity;
+                                    if (!frame.getItem().isEmpty()) {
+                                        extra = " - Item: " + BuiltInRegistries.ITEM.getKey(frame.getItem().getItem()).toString();
+                                    }
+                                } else if (entity instanceof Display.ItemDisplay) {
+                                    Display.ItemDisplay itemDisplay = (Display.ItemDisplay) entity;
+                                    net.minecraft.world.item.ItemStack stack = itemDisplay.getItemStack();
+                                    String dataStr = !stack.getComponents().isEmpty() ? stack.getComponents().toString() : "Sem Componentes";
+                                    extra = " - ItemDisplay: " + stack.getItem().getDescriptionId() + " | Dados: " + dataStr;
+                                } else if (entity instanceof Interaction) {
+                                    extra = " (Caixa de Clique - Ignorar)";
+                                }
+                                
+                                System.out.println("[Sapo Inspecionar] Entidade: " + entityId.toString() + extra);
+                            }
+                        }
+                        
+                        client.player.sendSystemMessage(Component.literal("§a[Sapo] Scan concluído! Resultados impressos no console."));
+                        return 1;
+                    })
                 )
             );
         });
