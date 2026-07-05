@@ -73,12 +73,14 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                 alertaTempoRestante--;
             }
 
-            // Renderiza as partículas nos locais onde a luz deve ser colocada
-            if (client.level != null && !SapoPuzzle.solucaoAtiva.isEmpty()) {
-                for (BlockPos pos : SapoPuzzle.solucaoAtiva) {
-                    client.level.addParticle(ParticleTypes.HAPPY_VILLAGER, 
-                        pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, 
-                        0, 0, 0);
+            // Renderiza partículas a cada 10 ticks (meio segundo) para não crashar a placa de vídeo
+            if (client.level != null && client.player != null && !SapoPuzzle.solucaoAtiva.isEmpty()) {
+                if (client.player.tickCount % 10 == 0) { 
+                    for (BlockPos pos : SapoPuzzle.solucaoAtiva) {
+                        client.level.addParticle(ParticleTypes.HAPPY_VILLAGER, 
+                            pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, 
+                            0, 0, 0);
+                    }
                 }
             }
         });

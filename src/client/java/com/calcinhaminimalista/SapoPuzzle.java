@@ -24,29 +24,28 @@ public class SapoPuzzle {
 
         char[][] grid = new char[10][10];
         
-        // COORDENADA CORRIGIDA: Baseado no F3 do jogador
-        BlockPos topLeft = new BlockPos(-346, 44, 179); 
+        // LÊ O CHÃO SÓLIDO (Y=43) PARA IGNORAR O MINECRAFT:LIGHT DO HYPIXEL
+        BlockPos topLeft = new BlockPos(-346, 43, 179); 
 
         client.player.sendSystemMessage(Component.literal("§e[Sapo] Escaneando o tabuleiro 10x10..."));
-        System.out.println("[Sapo Debug] Iniciando varredura na coordenada base: " + topLeft.toShortString());
+        System.out.println("[Sapo Debug] Iniciando varredura no piso sólido: " + topLeft.toShortString());
 
         boolean achouParede = false;
 
-        for (int r = 0; r < 10; r++) { // Eixo Z
-            for (int c = 0; c < 10; c++) { // Eixo X
+        for (int r = 0; r < 10; r++) { 
+            for (int c = 0; c < 10; c++) { 
                 BlockPos currentPos = topLeft.offset(c, 0, r);
                 BlockState state = client.level.getBlockState(currentPos);
                 String blockName = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
 
-                char cell = '.'; // Padrão: piso branco
+                char cell = '.'; 
 
-                // Detecta paredes pretas
                 if (blockName.contains("black") || blockName.contains("coal")) {
                     cell = 'X';
                     achouParede = true;
                 }
 
-                // Escaneia entidades: Caixa expandida para garantir que pega os textos flutuantes
+                // O scanner de entidades continua pegando a camada de cima (Y=44)
                 AABB box = new AABB(currentPos).inflate(0.2, 1.5, 0.2).move(0, 1, 0); 
                 List<Entity> entities = client.level.getEntities(client.player, box);
 
@@ -61,11 +60,6 @@ public class SapoPuzzle {
                     }
                 }
                 grid[r][c] = cell;
-                
-                // Debug extra para o primeiro bloco
-                if (r == 0 && c == 0) {
-                    System.out.println("[Sapo Debug] Bloco na posição 0,0 é: " + blockName + " e o resultado foi lido como: " + cell);
-                }
             }
         }
 
@@ -75,7 +69,7 @@ public class SapoPuzzle {
         }
 
         if (!achouParede) {
-            System.out.println("[Sapo Debug] AVISO: Nenhuma parede preta detectada! O Y=44 pode estar errado ou o bloco não tem 'black' no nome.");
+            System.out.println("[Sapo Debug] AVISO CRÍTICO: Nenhuma parede preta detectada! O Y=43 pode estar errado.");
         }
 
         System.out.println("[Sapo Debug] Iniciando o algoritmo Solver (Backtracking)...");
@@ -87,8 +81,7 @@ public class SapoPuzzle {
         long tempoFim = System.currentTimeMillis();
 
         if (resolvido) {
-            System.out.println("[Sapo Debug] SUCESSO! Puzzle resolvido em " + (tempoFim - tempoInicio) + "ms.");
-            System.out.println("[Sapo Debug] Total de lâmpadas posicionadas: " + bulbs.size());
+            System.out.println("[Sapo Debug] SUCESSO! Resolvido em " + (tempoFim - tempoInicio) + "ms.");
             client.player.sendSystemMessage(Component.literal("§a[Sapo] Puzzle resolvido! Siga as partículas verdes."));
             for (String b : bulbs) {
                 String[] parts = b.split(",");
@@ -97,8 +90,8 @@ public class SapoPuzzle {
                 solucaoAtiva.add(topLeft.offset(bc, 0, br));
             }
         } else {
-            System.out.println("[Sapo Debug] FALHA! O algoritmo não encontrou nenhuma solução possível para esta grade.");
-            client.player.sendSystemMessage(Component.literal("§c[Sapo] Falha ao resolver. Verifique o console para ver se a grade lida está correta."));
+            System.out.println("[Sapo Debug] FALHA! O algoritmo não encontrou nenhuma solução possível.");
+            client.player.sendSystemMessage(Component.literal("§c[Sapo] Falha ao resolver. Verifique o console."));
         }
     }
 
