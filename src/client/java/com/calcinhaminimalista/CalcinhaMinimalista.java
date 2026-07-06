@@ -158,6 +158,9 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                             "§e/sapo cor <hex> §7- Muda a cor do alerta\n" +
                             "§e/sapo gatilho <texto> §7- Muda o gatilho\n" +
                             "§e/sapo tempo <segs> §7- Muda o tempo\n" +
+                            "§e/sapo resolver §7- Resolve o puzzle Lights Up\n" +
+                            "§e/sapo limpar §7- Limpa as partículas\n" +
+                            "§e/sapo inspecionar §7- Inspeciona bloco\n" +
                             "§e/sapo debug §7- Alterna logs de som"
                         ));
                         return 1;
