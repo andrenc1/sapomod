@@ -256,54 +256,82 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("inspecionar")
                     .executes(context -> {
                         Minecraft client = Minecraft.getInstance();
-                        if (client.player == null || client.level == null || client.hitResult == null) return 0;
+                        if (client.player == null || client.level == null) return 0;
                         
-                        Vec3 hitPos = client.hitResult.getLocation();
-                        BlockPos blockPos = BlockPos.containing(hitPos);
+                        HitResult hit = client.player.pick(50.0D, 0.0F, false);
+                        if (hit == null || hit.getType() == HitResult.Type.MISS) {
+                            client.player.sendSystemMessage(Component.literal("§c[Sapo] Nenhum bloco detectado. Chegue mais perto ou aponte para um bloco."));
+                            return 0;
+                        }
+                        
+                        Vec3 hitPos = hit.getLocation();
+                        BlockPos blockPos;
+                        if (hit instanceof BlockHitResult) {
+                            blockPos = ((BlockHitResult) hit).getBlockPos();
+                        } else {
+                            blockPos = BlockPos.containing(hitPos);
+                        }
                         BlockState state = client.level.getBlockState(blockPos);
                         
                         Identifier blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-                        System.out.println("[Sapo Inspecionar] Bloco: " + blockId.toString());
+                        System.out.println("==================================");
+                        System.out.println("[Sapo Inspecionar] Bloco: " + blockId.toString() + " em " + blockPos.toShortString());
                         
-                        AABB box = new AABB(hitPos.x - 1.0, hitPos.y - 1.0, hitPos.z - 1.0, hitPos.x + 1.0, hitPos.y + 1.0, hitPos.z + 1.0);
+                        // Agulha fina exatamente no bloco apontado (ignorando os vizinhos)
+                        AABB box = new AABB(blockPos).inflate(0.1, 1.5, 0.1).move(0, 1, 0); 
                         List<Entity> entities = client.level.getEntities(client.player, box);
                         
                         if (entities.isEmpty()) {
-                            System.out.println("[Sapo Inspecionar] Nenhuma entidade próxima.");
+                            System.out.println("[Sapo Inspecionar] Nenhuma entidade útil nesta coluna.");
                         } else {
                             for (Entity entity : entities) {
-                                Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-                                String extra = "";
-                                
-                                if (entity instanceof Display.TextDisplay) {
-                                    Display.TextDisplay textDisplay = (Display.TextDisplay) entity;
-                                    if (textDisplay.getText() != null) {
-                                        extra = " - Texto: " + textDisplay.getText().getString();
-                                    }
-                                } else if (entity instanceof ArmorStand) {
-                                    ArmorStand stand = (ArmorStand) entity;
-                                    if (stand.hasCustomName()) {
-                                        extra = " - Nome: " + stand.getCustomName().getString();
-                                    }
-                                } else if (entity instanceof ItemFrame) {
-                                    ItemFrame frame = (ItemFrame) entity;
-                                    if (!frame.getItem().isEmpty()) {
-                                        extra = " - Item: " + BuiltInRegistries.ITEM.getKey(frame.getItem().getItem()).toString();
-                                    }
-                                } else if (entity instanceof Display.ItemDisplay) {
-                                    Display.ItemDisplay itemDisplay = (Display.ItemDisplay) entity;
-                                    net.minecraft.world.item.ItemStack stack = itemDisplay.getItemStack();
-                                    String dataStr = !stack.getComponents().isEmpty() ? stack.getComponents().toString() : "Sem Componentes";
-                                    extra = " - ItemDisplay: " + stack.getItem().getDescriptionId() + " | Dados: " + dataStr;
-                                } else if (entity instanceof Interaction) {
-                                    extra = " (Caixa de Clique - Ignorar)";
+                                // Pular lixo invisível e efeitos
+                                if (entity instanceof net.minecraft.world.entity.Interaction || 
+                                    entity instanceof net.minecraft.world.entity.AreaEffectCloud) {
+                                    continue;
                                 }
-                                
-                                System.out.println("[Sapo Inspecionar] Entidade: " + entityId.toString() + extra);
+
+                                if (entity instanceof Display.ItemDisplay itemDisplay) {
+                                    net.minecraft.world.item.ItemStack stack = itemDisplay.getItemStack();
+                                    String itemDesc = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+                                    
+                                    if (itemDesc.contains("air")) continue; // Ignora ar
+
+                                    String itemModel = "Nenhum";
+                                    String colors = "Nenhuma";
+                                    String dataStr = stack.getComponents().toString();
+                                    
+                                    if (dataStr.contains("minecraft:item_model=>")) {
+                                        int modelStart = dataStr.indexOf("minecraft:item_model=>") + 22;
+                                        int modelEnd = dataStr.indexOf(",", modelStart);
+                                        if (modelEnd == -1) modelEnd = dataStr.indexOf("}", modelStart);
+                                        if (modelEnd != -1) itemModel = dataStr.substring(modelStart, modelEnd);
+                                    }
+                                    
+                                    if (dataStr.contains("colors=[")) {
+                                        int colorStart = dataStr.indexOf("colors=[") + 8;
+                                        int colorEnd = dataStr.indexOf("]", colorStart);
+                                        if (colorEnd != -1) colors = dataStr.substring(colorStart, colorEnd);
+                                    }
+
+                                    System.out.println("-> Holograma: " + itemDesc + " | Modelo: " + itemModel + " | Cor: " + colors);
+                                    
+                                } else if (entity instanceof Display.TextDisplay textDisplay) {
+                                    if (textDisplay.getText() != null) {
+                                        System.out.println("-> Texto Flutuante: " + textDisplay.getText().getString());
+                                    }
+                                } else if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand stand) {
+                                    if (stand.hasCustomName()) {
+                                        System.out.println("-> Armor Stand: " + stand.getCustomName().getString());
+                                    }
+                                }
                             }
                         }
+                        System.out.println("==================================");
                         
-                        client.player.sendSystemMessage(Component.literal("§a[Sapo] Scan concluído! Resultados impressos no console."));
+                        client.player.sendSystemMessage(Component.literal("§e[Sapo] Bloco Olhado: §f" + blockId.toString()));
+                        client.player.sendSystemMessage(Component.literal("§e[Sapo] Coordenadas: §bX=" + blockPos.getX() + " §aY=" + blockPos.getY() + " §bZ=" + blockPos.getZ()));
+                        client.player.sendSystemMessage(Component.literal("§a[Sapo] Inspeção limpa concluída! Veja o console."));
                         return 1;
                     })
                 )
