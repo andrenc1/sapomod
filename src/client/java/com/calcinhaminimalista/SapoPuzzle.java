@@ -22,76 +22,91 @@ public class SapoPuzzle {
         if (client.level == null || client.player == null) return;
 
         char[][] grid = new char[10][10];
-        BlockPos topLeft = new BlockPos(-346, 43, 179); 
+        
+        // Preenche o grid vazio primeiro
+        for (int r = 0; r < 10; r++) {
+            for (int c = 0; c < 10; c++) {
+                grid[r][c] = '.';
+            }
+        }
 
-        client.player.sendSystemMessage(Component.literal("§e[Sapo] Escaneando o tabuleiro via Hologramas..."));
-        System.out.println("[Sapo Debug] Iniciando varredura de Entidades: " + topLeft.toShortString());
+        // Canto superior esquerdo exato do tabuleiro
+        BlockPos topLeft = new BlockPos(-346, 43, 179);
+
+        client.player.sendSystemMessage(Component.literal("§e[Sapo] Escaneando o tabuleiro Globalmente..."));
+        System.out.println("[Sapo Debug] Iniciando varredura Global a partir de: " + topLeft.toShortString());
+
+        // CAIXA GIGANTE: Engole a sala 10x10 inteira de uma vez!
+        AABB roomBox = new AABB(
+                topLeft.getX() - 1, topLeft.getY(), topLeft.getZ() - 1,
+                topLeft.getX() + 11, topLeft.getY() + 4, topLeft.getZ() + 11
+        );
+
+        // Pega todos os hologramas da sala de uma vez só
+        List<Entity> entities = client.level.getEntities(client.player, roomBox);
 
         boolean achouParede = false;
 
-        for (int r = 0; r < 10; r++) { 
-            for (int c = 0; c < 10; c++) { 
-                BlockPos currentPos = topLeft.offset(c, 0, r);
-                char cell = '.'; 
-
-                // TRUQUE DE MESTRE: Cria uma "agulha" fininha exatamente no centro do bloco
-                // Isso impede que o scanner pegue os hologramas dos blocos vizinhos por engano!
-                AABB box = new AABB(
-                    currentPos.getX() + 0.4, currentPos.getY() + 1.0, currentPos.getZ() + 0.4,
-                    currentPos.getX() + 0.6, currentPos.getY() + 2.0, currentPos.getZ() + 0.6
-                );
+        for (Entity e : entities) {
+            if (e instanceof Display.ItemDisplay itemDisplay) {
                 
-                List<Entity> entities = client.level.getEntities(client.player, box);
+                // MÁGICA: Descobre EXATAMENTE a qual quadrado do grid esta entidade pertence
+                BlockPos ePos = e.blockPosition();
+                int c = ePos.getX() - topLeft.getX();
+                int r = ePos.getZ() - topLeft.getZ();
 
-                for (Entity e : entities) {
-                    if (e instanceof Display.ItemDisplay itemDisplay) {
-                        String data = itemDisplay.getItemStack().getComponents().toString();
-                        
-                        if (data.contains("number0")) cell = '0';
-                        else if (data.contains("number1")) cell = '1';
-                        else if (data.contains("number2")) cell = '2';
-                        else if (data.contains("number3")) cell = '3';
-                        else if (data.contains("number4")) cell = '4';
-                        else if (data.contains("colors=[0]")) {
-                            // colors=[0] é preto absoluto. Se não for número, é parede!
-                            if (cell == '.') cell = 'X';
-                        }
+                // Se a entidade estiver dentro do limite 10x10 do tabuleiro
+                if (c >= 0 && c < 10 && r >= 0 && r < 10) {
+                    String data = itemDisplay.getItemStack().getComponents().toString();
+
+                    if (data.contains("number0")) grid[r][c] = '0';
+                    else if (data.contains("number1")) grid[r][c] = '1';
+                    else if (data.contains("number2")) grid[r][c] = '2';
+                    else if (data.contains("number3")) grid[r][c] = '3';
+                    else if (data.contains("number4")) grid[r][c] = '4';
+                    else if (data.contains("colors=[0]")) {
+                        // Se é preto absoluto e AINDA não tem um número guardado neste quadrado, marca como parede (X)
+                        if (grid[r][c] == '.') grid[r][c] = 'X';
                     }
                 }
-                
-                if (cell != '.') achouParede = true;
-                grid[r][c] = cell;
+            }
+        }
+
+        // Verifica se realmente leu algo sólido para o grid
+        for (int r = 0; r < 10; r++) {
+            for (int c = 0; c < 10; c++) {
+                if (grid[r][c] != '.') achouParede = true;
             }
         }
 
         System.out.println("[Sapo Debug] Tabuleiro lido com sucesso (Matriz 10x10):");
-        
         for (int i = 0; i < 10; i++) {
             System.out.println("[Sapo Debug] " + new String(grid[i]));
         }
 
         if (!achouParede) {
             System.out.println("[Sapo Debug] AVISO CRÍTICO: Nenhuma entidade preta ou número detectado!");
-            client.player.sendSystemMessage(Component.literal("§c[Sapo] Scan cancelado: Tabuleiro Holográfico parece vazio. Tente ajustar a posição X/Z base."));
-            return; // Previne o congelamento do jogo
+            client.player.sendSystemMessage(Component.literal("§c[Sapo] Scan cancelado: Tabuleiro Holográfico parece vazio."));
+            return;
         }
 
         System.out.println("[Sapo Debug] Iniciando o algoritmo Solver (Backtracking)...");
         tempoInicio = System.currentTimeMillis();
-        
-        Set<String> bulbs = new HashSet<>();
+
+        boolean[][] bulbs = new boolean[10][10];
         boolean resolvido = solve(grid, bulbs, 0, 0);
-        
+
         long tempoFim = System.currentTimeMillis();
 
         if (resolvido) {
             System.out.println("[Sapo Debug] SUCESSO! Resolvido em " + (tempoFim - tempoInicio) + "ms.");
             client.player.sendSystemMessage(Component.literal("§a[Sapo] Puzzle resolvido! Siga as partículas verdes."));
-            for (String b : bulbs) {
-                String[] parts = b.split(",");
-                int br = Integer.parseInt(parts[0]);
-                int bc = Integer.parseInt(parts[1]);
-                solucaoAtiva.add(topLeft.offset(bc, 0, br));
+            for (int r = 0; r < 10; r++) {
+                for (int c = 0; c < 10; c++) {
+                    if (bulbs[r][c]) {
+                        solucaoAtiva.add(topLeft.offset(c, 0, r));
+                    }
+                }
             }
         } else {
             System.out.println("[Sapo Debug] FALHA! O algoritmo não encontrou nenhuma solução possível.");
@@ -99,94 +114,158 @@ public class SapoPuzzle {
         }
     }
 
-    private static boolean solve(char[][] grid, Set<String> bulbs, int r, int c) {
-        // Trava de segurança: Aborta o solver se demorar mais de 2 segundos (2000ms)
-        if (System.currentTimeMillis() - tempoInicio > 2000) return false;
+    private static boolean solve(char[][] grid, boolean[][] bulbs, int r, int c) {
+        if (System.currentTimeMillis() - tempoInicio > 5000) return false;
 
-        if (c == 10) { r++; c = 0; }
+        if (c == 10) {
+            r++;
+            c = 0;
+        }
+        
+        if (isUnsolvable(grid, bulbs, r, c)) return false;
+
         if (r == 10) return isSolved(grid, bulbs);
 
         if (grid[r][c] != '.') return solve(grid, bulbs, r, c + 1);
 
         if (canPlace(grid, bulbs, r, c)) {
-            String pos = r + "," + c;
-            bulbs.add(pos);
-            if (isValidClues(grid, bulbs)) {
-                if (solve(grid, bulbs, r, c + 1)) return true;
-            }
-            bulbs.remove(pos); // Backtrack
+            bulbs[r][c] = true;
+            if (solve(grid, bulbs, r, c + 1)) return true;
+            bulbs[r][c] = false;
         }
 
         return solve(grid, bulbs, r, c + 1);
     }
 
-    private static boolean canPlace(char[][] grid, Set<String> bulbs, int r, int c) {
-        for (int i = r - 1; i >= 0; i--) {
-            if (grid[i][c] != '.') break;
-            if (bulbs.contains(i + "," + c)) return false;
-        }
-        for (int i = r + 1; i < 10; i++) {
-            if (grid[i][c] != '.') break;
-            if (bulbs.contains(i + "," + c)) return false;
-        }
-        for (int i = c - 1; i >= 0; i--) {
-            if (grid[r][i] != '.') break;
-            if (bulbs.contains(r + "," + i)) return false;
-        }
-        for (int i = c + 1; i < 10; i++) {
-            if (grid[r][i] != '.') break;
-            if (bulbs.contains(r + "," + i)) return false;
-        }
-        return true;
-    }
-
-    private static boolean isValidClues(char[][] grid, Set<String> bulbs) {
+    private static boolean isUnsolvable(char[][] grid, boolean[][] bulbs, int currentR, int currentC) {
         for (int r = 0; r < 10; r++) {
             for (int c = 0; c < 10; c++) {
                 if (grid[r][c] >= '0' && grid[r][c] <= '4') {
                     int req = grid[r][c] - '0';
                     int adj = 0;
-                    if (bulbs.contains((r - 1) + "," + c)) adj++;
-                    if (bulbs.contains((r + 1) + "," + c)) adj++;
-                    if (bulbs.contains(r + "," + (c - 1))) adj++;
-                    if (bulbs.contains(r + "," + (c + 1))) adj++;
-                    if (adj > req) return false;
+                    int possible = 0;
+
+                    if (r > 0 && grid[r - 1][c] == '.') {
+                        if (bulbs[r - 1][c]) { adj++; possible++; }
+                        else if (!isDecided(r - 1, c, currentR, currentC)) possible++;
+                    }
+                    if (r < 9 && grid[r + 1][c] == '.') {
+                        if (bulbs[r + 1][c]) { adj++; possible++; }
+                        else if (!isDecided(r + 1, c, currentR, currentC)) possible++;
+                    }
+                    if (c > 0 && grid[r][c - 1] == '.') {
+                        if (bulbs[r][c - 1]) { adj++; possible++; }
+                        else if (!isDecided(r, c - 1, currentR, currentC)) possible++;
+                    }
+                    if (c < 9 && grid[r][c + 1] == '.') {
+                        if (bulbs[r][c + 1]) { adj++; possible++; }
+                        else if (!isDecided(r, c + 1, currentR, currentC)) possible++;
+                    }
+
+                    if (adj > req) return true;
+                    if (possible < req) return true;
                 }
             }
         }
+
+        for (int r = 0; r < 10; r++) {
+            for (int c = 0; c < 10; c++) {
+                if (grid[r][c] == '.') {
+                    if (isDecided(r, c, currentR, currentC)) {
+                        if (!isCellLit(grid, bulbs, r, c)) {
+                            boolean canBeLit = false;
+                            
+                            for (int i = r + 1; i < 10; i++) {
+                                if (grid[i][c] != '.') break;
+                                if (!isDecided(i, c, currentR, currentC)) {
+                                    canBeLit = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!canBeLit) {
+                                for (int i = c + 1; i < 10; i++) {
+                                    if (grid[r][i] != '.') break;
+                                    if (!isDecided(r, i, currentR, currentC)) {
+                                        canBeLit = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (!canBeLit) return true; 
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isDecided(int r, int c, int currentR, int currentC) {
+        return (r < currentR) || (r == currentR && c < currentC);
+    }
+
+    private static boolean canPlace(char[][] grid, boolean[][] bulbs, int r, int c) {
+        for (int i = r - 1; i >= 0; i--) {
+            if (grid[i][c] != '.') break;
+            if (bulbs[i][c]) return false;
+        }
+        for (int i = r + 1; i < 10; i++) {
+            if (grid[i][c] != '.') break;
+            if (bulbs[i][c]) return false;
+        }
+        for (int i = c - 1; i >= 0; i--) {
+            if (grid[r][i] != '.') break;
+            if (bulbs[r][i]) return false;
+        }
+        for (int i = c + 1; i < 10; i++) {
+            if (grid[r][i] != '.') break;
+            if (bulbs[r][i]) return false;
+        }
         return true;
     }
 
-    private static boolean isSolved(char[][] grid, Set<String> bulbs) {
+    private static boolean isCellLit(char[][] grid, boolean[][] bulbs, int r, int c) {
+        if (bulbs[r][c]) return true;
+        for (int i = r - 1; i >= 0; i--) {
+            if (grid[i][c] != '.') break;
+            if (bulbs[i][c]) return true;
+        }
+        for (int i = r + 1; i < 10; i++) {
+            if (grid[i][c] != '.') break;
+            if (bulbs[i][c]) return true;
+        }
+        for (int i = c - 1; i >= 0; i--) {
+            if (grid[r][i] != '.') break;
+            if (bulbs[r][i]) return true;
+        }
+        for (int i = c + 1; i < 10; i++) {
+            if (grid[r][i] != '.') break;
+            if (bulbs[r][i]) return true;
+        }
+        return false;
+    }
+
+    private static boolean isSolved(char[][] grid, boolean[][] bulbs) {
         for (int r = 0; r < 10; r++) {
             for (int c = 0; c < 10; c++) {
                 if (grid[r][c] >= '0' && grid[r][c] <= '4') {
                     int req = grid[r][c] - '0';
                     int adj = 0;
-                    if (bulbs.contains((r - 1) + "," + c)) adj++;
-                    if (bulbs.contains((r + 1) + "," + c)) adj++;
-                    if (bulbs.contains(r + "," + (c - 1))) adj++;
-                    if (bulbs.contains(r + "," + (c + 1))) adj++;
+                    if (r > 0 && bulbs[r - 1][c]) adj++;
+                    if (r < 9 && bulbs[r + 1][c]) adj++;
+                    if (c > 0 && bulbs[r][c - 1]) adj++;
+                    if (c < 9 && bulbs[r][c + 1]) adj++;
                     if (adj != req) return false;
                 }
             }
         }
 
-        Set<String> lit = new HashSet<>();
-        for (String b : bulbs) {
-            String[] parts = b.split(",");
-            int br = Integer.parseInt(parts[0]);
-            int bc = Integer.parseInt(parts[1]);
-            lit.add(br + "," + bc);
-            for (int i = br - 1; i >= 0 && grid[i][bc] == '.'; i--) lit.add(i + "," + bc);
-            for (int i = br + 1; i < 10 && grid[i][bc] == '.'; i++) lit.add(i + "," + bc);
-            for (int i = bc - 1; i >= 0 && grid[br][i] == '.'; i--) lit.add(br + "," + i);
-            for (int i = bc + 1; i < 10 && grid[br][i] == '.'; i++) lit.add(br + "," + i);
-        }
-
         for (int r = 0; r < 10; r++) {
             for (int c = 0; c < 10; c++) {
-                if (grid[r][c] == '.' && !lit.contains(r + "," + c)) return false;
+                if (grid[r][c] == '.' && !isCellLit(grid, bulbs, r, c)) return false;
             }
         }
         return true;
