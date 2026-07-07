@@ -1,6 +1,11 @@
 package com.calcinhaminimalista;
-
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.FloatControl;
+import java.io.File;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -35,11 +40,33 @@ public class CalcinhaMinimalista implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
         Config.carregar();
         Sapo.registrar();
 
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             String textoChat = message.getString();
+            Minecraft client = Minecraft.getInstance();
+            if (client.player != null) {
+                String nome = client.player.getName().getString();
+                if (textoChat.contains(nome + " is attempting to solve the edenic light puzzle!")) {
+                    SapoPuzzle.escanearEResolver(client);
+                }
+            }
+
+            if (Config.somGatilhos != null && !Config.somGatilhos.isEmpty()) {
+                System.out.println("[Sapo Debug] Mensagem recebida (GAME): " + textoChat);
+                System.out.println("[Sapo Debug] Gatilhos configurados: " + Config.somGatilhos);
+                for (String gatilho : Config.somGatilhos.split(",")) {
+                    String gLimpo = gatilho.trim();
+                    if (!gLimpo.isEmpty() && textoChat.toLowerCase().contains(gLimpo.toLowerCase())) {
+                        System.out.println("[Sapo Debug] Gatilho ativado! Tocando som externo para: " + gLimpo + " | Volume: " + Config.somVolume);
+                        tocarSomExterno();
+                        break;
+                    }
+                }
+            }
+
             if (Config.textoGatilho != null && !Config.textoGatilho.isEmpty()) {
                 for (String gatilho : Config.textoGatilho.split(",")) {
                     String gLimpo = gatilho.trim();
@@ -55,6 +82,27 @@ public class CalcinhaMinimalista implements ClientModInitializer {
 
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
             String textoChat = message.getString();
+            Minecraft client = Minecraft.getInstance();
+            if (client.player != null) {
+                String nome = client.player.getName().getString();
+                if (textoChat.contains(nome + " is attempting to solve the edenic light puzzle!")) {
+                    SapoPuzzle.escanearEResolver(client);
+                }
+            }
+
+            if (Config.somGatilhos != null && !Config.somGatilhos.isEmpty()) {
+                System.out.println("[Sapo Debug] Mensagem recebida (CHAT): " + textoChat);
+                System.out.println("[Sapo Debug] Gatilhos configurados: " + Config.somGatilhos);
+                for (String gatilho : Config.somGatilhos.split(",")) {
+                    String gLimpo = gatilho.trim();
+                    if (!gLimpo.isEmpty() && textoChat.toLowerCase().contains(gLimpo.toLowerCase())) {
+                        System.out.println("[Sapo Debug] Gatilho ativado! Tocando som externo para: " + gLimpo + " | Volume: " + Config.somVolume);
+                        tocarSomExterno();
+                        break;
+                    }
+                }
+            }
+
             if (Config.textoGatilho != null && !Config.textoGatilho.isEmpty()) {
                 for (String gatilho : Config.textoGatilho.split(",")) {
                     String gLimpo = gatilho.trim();
@@ -117,28 +165,7 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                         return 1;
                     })
                 )
-                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("gatilho")
-                    .then(RequiredArgumentBuilder.<FabricClientCommandSource, String>argument("texto", StringArgumentType.greedyString())
-                        .executes(context -> {
-                            String texto = StringArgumentType.getString(context, "texto");
-                            Config.textoGatilho = texto;
-                            Config.salvar();
-                            context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Gatilho definido para: " + texto));
-                            return 1;
-                        })
-                    )
-                )
-                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("alerta")
-                    .then(RequiredArgumentBuilder.<FabricClientCommandSource, String>argument("texto", StringArgumentType.greedyString())
-                        .executes(context -> {
-                            String texto = StringArgumentType.getString(context, "texto");
-                            Config.textoAlerta = texto;
-                            Config.salvar();
-                            context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Alerta definido para: " + texto));
-                            return 1;
-                        })
-                    )
-                )
+
                 .executes(context -> {
                     Minecraft.getInstance().execute(() -> {
                         Minecraft.getInstance().setScreen(new SapoModMenu().getModConfigScreenFactory().create(Minecraft.getInstance().screen));
@@ -153,11 +180,7 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                             "§e/sapo help §7- Mostra essa ajuda\n" +
                             "§e/sapo editarHUD §7- Move os textos na tela\n" +
                             "§e/sapo testar §7- Testa os alertas\n" +
-                            "§e/sapo simular <texto> §7- Simula mensagem\n" +
-                            "§e/sapo alerta <texto> §7- Muda texto do alerta\n" +
-                            "§e/sapo cor <hex> §7- Muda a cor do alerta\n" +
-                            "§e/sapo gatilho <texto> §7- Muda o gatilho\n" +
-                            "§e/sapo tempo <segs> §7- Muda o tempo\n" +
+
                             "§e/sapo resolver §7- Resolve o puzzle Lights Up\n" +
                             "§e/sapo limpar §7- Limpa as partículas\n" +
                             "§e/sapo inspecionar §7- Inspeciona bloco\n" +
@@ -174,32 +197,7 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                         return 1;
                     })
                 )
-                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("simular")
-                    .then(RequiredArgumentBuilder.<FabricClientCommandSource, String>argument("texto", StringArgumentType.greedyString())
-                        .executes(context -> {
-                            String texto = StringArgumentType.getString(context, "texto");
-                            boolean ativou = false;
-                            if (Config.textoGatilho != null && !Config.textoGatilho.isEmpty()) {
-                                for (String gatilho : Config.textoGatilho.split(",")) {
-                                    String gLimpo = gatilho.trim();
-                                    if (!gLimpo.isEmpty() && texto.contains(gLimpo)) {
-                                        alertaTempoRestante = Config.alertaTempo;
-                                        mensagemVivoMorto = Config.textoAlerta;
-                                        corVivoMorto = 0;
-                                        ativou = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (ativou) {
-                                context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] A simulação ativou o gatilho!"));
-                            } else {
-                                context.getSource().getPlayer().sendSystemMessage(Component.literal("§c[Sapo] A simulação não ativou o gatilho. Verifique o texto configurado."));
-                            }
-                            return 1;
-                        })
-                    )
-                )
+
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("editarHUD")
                     .executes(context -> {
                         Minecraft.getInstance().execute(() -> {
@@ -208,40 +206,7 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                         return 1;
                     })
                 )
-                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("cor")
-                    .then(RequiredArgumentBuilder.<FabricClientCommandSource, String>argument("hex", StringArgumentType.string())
-                        .executes(context -> {
-                            String hexStr = StringArgumentType.getString(context, "hex");
-                            try {
-                                if (hexStr.startsWith("#")) hexStr = hexStr.substring(1);
-                                if (hexStr.length() == 6) hexStr = "FF" + hexStr; // Add fully opaque alpha
-                                Config.alertaCor = (int) Long.parseLong(hexStr, 16);
-                                Config.salvar();
-                                context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Cor atualizada!"));
-                            } catch (Exception e) {
-                                context.getSource().getPlayer().sendSystemMessage(Component.literal("§c[Sapo] Cor inválida. Use um formato hexadecimal (ex: FF0000)"));
-                            }
-                            return 1;
-                        })
-                    )
-                )
-                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("tempo")
-                    .then(RequiredArgumentBuilder.<FabricClientCommandSource, String>argument("segundos", StringArgumentType.string())
-                        .executes(context -> {
-                            String segStr = StringArgumentType.getString(context, "segundos");
-                            try {
-                                int segundos = Integer.parseInt(segStr);
-                                if (segundos < 1) segundos = 1;
-                                Config.alertaTempo = segundos * 20; // 20 ticks por segundo
-                                Config.salvar();
-                                context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Tempo configurado para " + segundos + " segundos!"));
-                            } catch (Exception e) {
-                                context.getSource().getPlayer().sendSystemMessage(Component.literal("§c[Sapo] Tempo inválido. Insira o número de segundos (ex: 5)."));
-                            }
-                            return 1;
-                        })
-                    )
-                )
+
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("resolver")
                     .executes(context -> {
                         Minecraft client = Minecraft.getInstance();
@@ -340,5 +305,30 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                 )
             );
         });
+    }
+
+    public static void tocarSomExterno() {
+        try {
+            File pastaConfig = new File(FabricLoader.getInstance().getConfigDir().toFile(), "calcinhaminimalista");
+            File arquivoSom = new File(pastaConfig, "sapo_alerta.wav");
+            if (arquivoSom.exists()) {
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(arquivoSom);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioStream);
+
+                if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                    FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                    float volumeNormalizado = Math.max(Config.somVolume, 0.0001f);
+                    float db = (float) (Math.log10(volumeNormalizado) * 20.0f);
+                    gainControl.setValue(db);
+                }
+
+                clip.start();
+            } else {
+                System.out.println("[Sapo Debug] Arquivo sapo_alerta.wav nao encontrado na pasta config: " + arquivoSom.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            System.out.println("[Sapo Debug] Erro ao tocar sapo_alerta.wav: " + e.getMessage());
+        }
     }
 }

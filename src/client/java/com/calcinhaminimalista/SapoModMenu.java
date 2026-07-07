@@ -67,6 +67,22 @@ public class SapoModMenu implements ModMenuApi {
                     .setSaveConsumer(newValue -> Config.alertaTempo = newValue * 20)
                     .build());
 
+            ConfigCategory sons = builder.getOrCreateCategory(Component.literal("Sons"));
+
+            sons.addEntry(entryBuilder.startStrField(Component.literal("Gatilhos para Som (use vírgula)"), Config.somGatilhos)
+                    .setDefaultValue("")
+                    .setTooltip(Component.literal("Mensagens que farão o som de alerta tocar"))
+                    .setSaveConsumer(newValue -> Config.somGatilhos = newValue)
+                    .build());
+
+            sons.addEntry(entryBuilder.startFloatField(Component.literal("Volume do Som"), Config.somVolume)
+                    .setDefaultValue(1.0f)
+                    .setMin(0.0f)
+                    .setMax(2.0f)
+                    .setTooltip(Component.literal("Volume do som personalizado (0.0 a 2.0)"))
+                    .setSaveConsumer(newValue -> Config.somVolume = newValue)
+                    .build());
+
             builder.setSavingRunnable(Config::salvar);
 
             return builder.build();

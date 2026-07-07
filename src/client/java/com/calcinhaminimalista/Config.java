@@ -8,6 +8,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 public class Config {
     // Variáveis do mod
@@ -26,10 +29,13 @@ public class Config {
     public static int vivoMortoX = 50;
     public static int vivoMortoY = 70;
     public static float vivoMortoEscala = 2.0f;
+    public static String somGatilhos = "";
+    public static float somVolume = 1.0f;
 
     // Ferramentas para ler/escrever o JSON
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File ARQUIVO = new File(FabricLoader.getInstance().getConfigDir().toFile(), "sapo_config.json");
+    private static final File PASTA_CONFIG = new File(FabricLoader.getInstance().getConfigDir().toFile(), "calcinhaminimalista");
+    private static final File ARQUIVO = new File(PASTA_CONFIG, "sapo_config.json");
 
     // Método para carregar ao abrir o jogo
     public static void carregar() {
@@ -51,18 +57,43 @@ public class Config {
                 vivoMortoX = dados.vivoMortoX != 0 ? dados.vivoMortoX : 50;
                 vivoMortoY = dados.vivoMortoY != 0 ? dados.vivoMortoY : 70;
                 vivoMortoEscala = dados.vivoMortoEscala != 0.0f ? dados.vivoMortoEscala : 2.0f;
+                if (dados.somGatilhos != null) somGatilhos = dados.somGatilhos;
+                somVolume = dados.somVolume != 0.0f ? dados.somVolume : 1.0f;
             } catch (IOException e) {
                 System.out.println("Erro ao carregar as configurações do Sapo.");
             }
         } else {
             salvar(); // Cria o arquivo padrão se não existir
         }
+        extrairSomPadrao();
+    }
+
+    private static void extrairSomPadrao() {
+        if (!PASTA_CONFIG.exists()) {
+            PASTA_CONFIG.mkdirs();
+        }
+        File arquivoSom = new File(PASTA_CONFIG, "sapo_alerta.wav");
+        if (!arquivoSom.exists()) {
+            try (InputStream in = Config.class.getResourceAsStream("/sapo_alerta.wav")) {
+                if (in != null) {
+                    Files.copy(in, arquivoSom.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    System.out.println("[Sapo] Arquivo sapo_alerta.wav padrão extraído com sucesso.");
+                } else {
+                    System.out.println("[Sapo] Aviso: sapo_alerta.wav não encontrado dentro do mod (resources).");
+                }
+            } catch (IOException e) {
+                System.out.println("[Sapo] Erro ao extrair sapo_alerta.wav padrão: " + e.getMessage());
+            }
+        }
     }
 
     // Método para salvar ao fechar o menu
     public static void salvar() {
+        if (!PASTA_CONFIG.exists()) {
+            PASTA_CONFIG.mkdirs();
+        }
         try (FileWriter escritor = new FileWriter(ARQUIVO)) {
-            SapoDados dados = new SapoDados(ativo, minCroac, maxCroac, modoDev, textoGatilho, textoAlerta, alertaX, alertaY, alertaEscala, alertaTempo, alertaCor, modoVivoOuMorto, vivoMortoX, vivoMortoY, vivoMortoEscala);
+            SapoDados dados = new SapoDados(ativo, minCroac, maxCroac, modoDev, textoGatilho, textoAlerta, alertaX, alertaY, alertaEscala, alertaTempo, alertaCor, modoVivoOuMorto, vivoMortoX, vivoMortoY, vivoMortoEscala, somGatilhos, somVolume);
             GSON.toJson(dados, escritor);
         } catch (IOException e) {
             System.out.println("Erro ao salvar as configurações do Sapo.");
@@ -86,8 +117,10 @@ public class Config {
         int vivoMortoX;
         int vivoMortoY;
         float vivoMortoEscala;
+        String somGatilhos;
+        float somVolume;
 
-        SapoDados(boolean ativo, int minCroac, int maxCroac, boolean modoDev, String textoGatilho, String textoAlerta, int alertaX, int alertaY, float alertaEscala, int alertaTempo, int alertaCor, boolean modoVivoOuMorto, int vivoMortoX, int vivoMortoY, float vivoMortoEscala) {
+        SapoDados(boolean ativo, int minCroac, int maxCroac, boolean modoDev, String textoGatilho, String textoAlerta, int alertaX, int alertaY, float alertaEscala, int alertaTempo, int alertaCor, boolean modoVivoOuMorto, int vivoMortoX, int vivoMortoY, float vivoMortoEscala, String somGatilhos, float somVolume) {
             this.ativo = ativo;
             this.minCroac = minCroac;
             this.maxCroac = maxCroac;
@@ -103,6 +136,8 @@ public class Config {
             this.vivoMortoX = vivoMortoX;
             this.vivoMortoY = vivoMortoY;
             this.vivoMortoEscala = vivoMortoEscala;
+            this.somGatilhos = somGatilhos;
+            this.somVolume = somVolume;
         }
     }
 }
