@@ -6,10 +6,13 @@ import com.google.gson.annotations.SerializedName;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
@@ -41,7 +44,7 @@ public class Config {
     // Method to load config
     public static void load() {
         if (FILE.exists()) {
-            try (FileReader reader = new FileReader(FILE)) {
+            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(FILE), StandardCharsets.UTF_8)) {
                 SapoData data = GSON.fromJson(reader, SapoData.class);
                 active = data.active;
                 minCroaks = data.minCroaks;
@@ -93,7 +96,7 @@ public class Config {
         if (!CONFIG_DIR.exists()) {
             CONFIG_DIR.mkdirs();
         }
-        try (FileWriter writer = new FileWriter(FILE)) {
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(FILE), StandardCharsets.UTF_8)) {
             SapoData data = new SapoData(active, minCroaks, maxCroaks, devMode, triggerText, alertText, alertX, alertY, alertScale, alertTime, alertColor, aliveOrDeadMode, aliveOrDeadX, aliveOrDeadY, aliveOrDeadScale, soundTriggers, soundVolume);
             GSON.toJson(data, writer);
         } catch (IOException e) {
