@@ -2,6 +2,7 @@ package com.sapo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.SerializedName;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
@@ -101,22 +102,39 @@ public class Config {
     }
 
     private static class SapoData {
+        @SerializedName("ativo")
         boolean active;
+        @SerializedName("minCroac")
         int minCroaks;
+        @SerializedName("maxCroac")
         int maxCroaks;
+        @SerializedName("modoDev")
         boolean devMode;
+        @SerializedName("textoGatilho")
         String triggerText;
+        @SerializedName("textoAlerta")
         String alertText;
+        @SerializedName("alertaX")
         int alertX;
+        @SerializedName("alertaY")
         int alertY;
+        @SerializedName("alertaEscala")
         float alertScale;
+        @SerializedName("alertaTempo")
         int alertTime;
+        @SerializedName("alertaCor")
         int alertColor;
+        @SerializedName("modoVivoOuMorto")
         boolean aliveOrDeadMode;
+        @SerializedName("vivoMortoX")
         int aliveOrDeadX;
+        @SerializedName("vivoMortoY")
         int aliveOrDeadY;
+        @SerializedName("vivoMortoEscala")
         float aliveOrDeadScale;
+        @SerializedName("somGatilhos")
         String soundTriggers;
+        @SerializedName("somVolume")
         float soundVolume;
 
         SapoData(boolean active, int minCroaks, int maxCroaks, boolean devMode, String triggerText, String alertText, int alertX, int alertY, float alertScale, int alertTime, int alertColor, boolean aliveOrDeadMode, int aliveOrDeadX, int aliveOrDeadY, float aliveOrDeadScale, String soundTriggers, float soundVolume) {
@@ -140,4 +158,3 @@ public class Config {
         }
     }
 }
-
