@@ -1,4 +1,4 @@
-package com.calcinhaminimalista;
+﻿package com.sapo;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import javax.sound.sampled.AudioSystem;
@@ -33,47 +33,47 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.Interaction;
 import java.util.List;
 
-public class CalcinhaMinimalista implements ClientModInitializer {
-    public static int alertaTempoRestante = 0;
-    public static String mensagemVivoMorto = "";
-    public static int corVivoMorto = 0;
+public class SapoMod implements ClientModInitializer {
+    public static int alertTimeRemaining = 0;
+    public static String aliveOrDeadMessage = "";
+    public static int aliveOrDeadColor = 0;
 
     @Override
     public void onInitializeClient() {
 
-        Config.carregar();
+        Config.load();
         Sapo.registrar();
 
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
-            String textoChat = message.getString();
+            String chatText = message.getString();
             Minecraft client = Minecraft.getInstance();
             if (client.player != null) {
-                String nome = client.player.getName().getString();
-                if (textoChat.contains(nome + " is attempting to solve the edenic light puzzle!")) {
+                String name = client.player.getName().getString();
+                if (chatText.contains(name + " is attempting to solve the edenic light puzzle!")) {
                     SapoPuzzle.escanearEResolver(client);
                 }
             }
 
-            if (Config.somGatilhos != null && !Config.somGatilhos.isEmpty()) {
-                System.out.println("[Sapo Debug] Mensagem recebida (GAME): " + textoChat);
-                System.out.println("[Sapo Debug] Gatilhos configurados: " + Config.somGatilhos);
-                for (String gatilho : Config.somGatilhos.split(",")) {
-                    String gLimpo = gatilho.trim();
-                    if (!gLimpo.isEmpty() && textoChat.toLowerCase().contains(gLimpo.toLowerCase())) {
-                        System.out.println("[Sapo Debug] Gatilho ativado! Tocando som externo para: " + gLimpo + " | Volume: " + Config.somVolume);
-                        tocarSomExterno();
+            if (Config.soundTriggers != null && !Config.soundTriggers.isEmpty()) {
+                System.out.println("[Sapo Debug] Message received (GAME): " + chatText);
+                System.out.println("[Sapo Debug] Configured triggers: " + Config.soundTriggers);
+                for (String trigger : Config.soundTriggers.split(",")) {
+                    String cleanT = trigger.trim();
+                    if (!cleanT.isEmpty() && chatText.toLowerCase().contains(cleanT.toLowerCase())) {
+                        System.out.println("[Sapo Debug] Trigger activated! Playing external sound for: " + cleanT + " | Volume: " + Config.soundVolume);
+                        playExternalSound();
                         break;
                     }
                 }
             }
 
-            if (Config.textoGatilho != null && !Config.textoGatilho.isEmpty()) {
-                for (String gatilho : Config.textoGatilho.split(",")) {
-                    String gLimpo = gatilho.trim();
-                    if (!gLimpo.isEmpty() && textoChat.contains(gLimpo)) {
-                        alertaTempoRestante = Config.alertaTempo;
-                        mensagemVivoMorto = Config.textoAlerta;
-                        corVivoMorto = 0;
+            if (Config.triggerText != null && !Config.triggerText.isEmpty()) {
+                for (String trigger : Config.triggerText.split(",")) {
+                    String cleanT = trigger.trim();
+                    if (!cleanT.isEmpty() && chatText.contains(cleanT)) {
+                        alertTimeRemaining = Config.alertTime;
+                        aliveOrDeadMessage = Config.alertText;
+                        aliveOrDeadColor = 0;
                         break;
                     }
                 }
@@ -81,35 +81,35 @@ public class CalcinhaMinimalista implements ClientModInitializer {
         });
 
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
-            String textoChat = message.getString();
+            String chatText = message.getString();
             Minecraft client = Minecraft.getInstance();
             if (client.player != null) {
-                String nome = client.player.getName().getString();
-                if (textoChat.contains(nome + " is attempting to solve the edenic light puzzle!")) {
+                String name = client.player.getName().getString();
+                if (chatText.contains(name + " is attempting to solve the edenic light puzzle!")) {
                     SapoPuzzle.escanearEResolver(client);
                 }
             }
 
-            if (Config.somGatilhos != null && !Config.somGatilhos.isEmpty()) {
-                System.out.println("[Sapo Debug] Mensagem recebida (CHAT): " + textoChat);
-                System.out.println("[Sapo Debug] Gatilhos configurados: " + Config.somGatilhos);
-                for (String gatilho : Config.somGatilhos.split(",")) {
-                    String gLimpo = gatilho.trim();
-                    if (!gLimpo.isEmpty() && textoChat.toLowerCase().contains(gLimpo.toLowerCase())) {
-                        System.out.println("[Sapo Debug] Gatilho ativado! Tocando som externo para: " + gLimpo + " | Volume: " + Config.somVolume);
-                        tocarSomExterno();
+            if (Config.soundTriggers != null && !Config.soundTriggers.isEmpty()) {
+                System.out.println("[Sapo Debug] Message received (CHAT): " + chatText);
+                System.out.println("[Sapo Debug] Configured triggers: " + Config.soundTriggers);
+                for (String trigger : Config.soundTriggers.split(",")) {
+                    String cleanT = trigger.trim();
+                    if (!cleanT.isEmpty() && chatText.toLowerCase().contains(cleanT.toLowerCase())) {
+                        System.out.println("[Sapo Debug] Trigger activated! Playing external sound for: " + cleanT + " | Volume: " + Config.soundVolume);
+                        playExternalSound();
                         break;
                     }
                 }
             }
 
-            if (Config.textoGatilho != null && !Config.textoGatilho.isEmpty()) {
-                for (String gatilho : Config.textoGatilho.split(",")) {
-                    String gLimpo = gatilho.trim();
-                    if (!gLimpo.isEmpty() && textoChat.contains(gLimpo)) {
-                        alertaTempoRestante = Config.alertaTempo;
-                        mensagemVivoMorto = Config.textoAlerta;
-                        corVivoMorto = 0;
+            if (Config.triggerText != null && !Config.triggerText.isEmpty()) {
+                for (String trigger : Config.triggerText.split(",")) {
+                    String cleanT = trigger.trim();
+                    if (!cleanT.isEmpty() && chatText.contains(cleanT)) {
+                        alertTimeRemaining = Config.alertTime;
+                        aliveOrDeadMessage = Config.alertText;
+                        aliveOrDeadColor = 0;
                         break;
                     }
                 }
@@ -117,14 +117,14 @@ public class CalcinhaMinimalista implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (alertaTempoRestante > 0) {
-                alertaTempoRestante--;
+            if (alertTimeRemaining > 0) {
+                alertTimeRemaining--;
             }
 
-            // Renderiza partículas a cada 10 ticks (meio segundo) para não crashar a placa de vídeo
-            if (client.level != null && client.player != null && !SapoPuzzle.solucaoAtiva.isEmpty()) {
+            // Render particles every 10 ticks (half a second) to avoid crashing the GPU
+            if (client.level != null && client.player != null && !SapoPuzzle.activeSolution.isEmpty()) {
                 if (client.player.tickCount % 10 == 0) { 
-                    for (BlockPos pos : SapoPuzzle.solucaoAtiva) {
+                    for (BlockPos pos : SapoPuzzle.activeSolution) {
                         client.level.addParticle(ParticleTypes.HAPPY_VILLAGER, 
                             pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, 
                             0, 0, 0);
@@ -133,21 +133,21 @@ public class CalcinhaMinimalista implements ClientModInitializer {
             }
         });
 
-        HudElementRegistry.addLast(Identifier.parse("calcinhaminimalista:alerta"), (graphics, tracker) -> {
-            if (alertaTempoRestante > 0) {
-                String texto = Config.modoVivoOuMorto && corVivoMorto != 0 ? mensagemVivoMorto : Config.textoAlerta;
-                String textFormatado = "§l" + texto;
-                int renderCor = (Config.modoVivoOuMorto && corVivoMorto != 0) ? corVivoMorto : Config.alertaCor;
-                renderCor |= 0xFF000000;
+        HudElementRegistry.addLast(Identifier.parse("sapo:alert"), (graphics, tracker) -> {
+            if (alertTimeRemaining > 0) {
+                String text = Config.aliveOrDeadMode && aliveOrDeadColor != 0 ? aliveOrDeadMessage : Config.alertText;
+                String formattedText = "§l" + text;
+                int renderColor = (Config.aliveOrDeadMode && aliveOrDeadColor != 0) ? aliveOrDeadColor : Config.alertColor;
+                renderColor |= 0xFF000000;
                 
-                int posX = (Config.modoVivoOuMorto && corVivoMorto != 0) ? Config.vivoMortoX : Config.alertaX;
-                int posY = (Config.modoVivoOuMorto && corVivoMorto != 0) ? Config.vivoMortoY : Config.alertaY;
-                float escala = (Config.modoVivoOuMorto && corVivoMorto != 0) ? Config.vivoMortoEscala : Config.alertaEscala;
+                int posX = (Config.aliveOrDeadMode && aliveOrDeadColor != 0) ? Config.aliveOrDeadX : Config.alertX;
+                int posY = (Config.aliveOrDeadMode && aliveOrDeadColor != 0) ? Config.aliveOrDeadY : Config.alertY;
+                float scale = (Config.aliveOrDeadMode && aliveOrDeadColor != 0) ? Config.aliveOrDeadScale : Config.alertScale;
 
                 graphics.pose().pushMatrix();
                 graphics.pose().translate(posX, posY);
-                graphics.pose().scale(escala, escala);
-                graphics.text(Minecraft.getInstance().font, textFormatado, 0, 0, renderCor, true);
+                graphics.pose().scale(scale, scale);
+                graphics.text(Minecraft.getInstance().font, formattedText, 0, 0, renderColor, true);
                 graphics.pose().popMatrix();
             }
         });
@@ -156,11 +156,11 @@ public class CalcinhaMinimalista implements ClientModInitializer {
             dispatcher.register(LiteralArgumentBuilder.<FabricClientCommandSource>literal("sapo")
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("debug")
                     .executes(context -> {
-                        Config.modoDev = !Config.modoDev;
-                        Config.salvar();
-                        String estado = Config.modoDev ? "§2LIGADO" : "§cDESLIGADO";
+                        Config.devMode = !Config.devMode;
+                        Config.save();
+                        String state = Config.devMode ? "§2ON" : "§cOFF";
                         context.getSource().getPlayer().sendSystemMessage(
-                                Component.literal("§a[Sapo] Modo Dev de Sons: " + estado)
+                                Component.literal("§a[Sapo] Sound Dev Mode: " + state)
                         );
                         return 1;
                     })
@@ -175,25 +175,24 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("help")
                     .executes(context -> {
                         context.getSource().getPlayer().sendSystemMessage(Component.literal(
-                            "§a[Sapo] Comandos:\n" +
-                            "§e/sapo §7- Abre o Mod Menu\n" +
-                            "§e/sapo help §7- Mostra essa ajuda\n" +
-                            "§e/sapo editarHUD §7- Move os textos na tela\n" +
-                            "§e/sapo testar §7- Testa os alertas\n" +
-
-                            "§e/sapo resolver §7- Resolve o puzzle Lights Up\n" +
-                            "§e/sapo limpar §7- Limpa as partículas\n" +
-                            "§e/sapo inspecionar §7- Inspeciona bloco\n" +
-                            "§e/sapo debug §7- Alterna logs de som"
+                            "§a[Sapo] Commands:\n" +
+                            "§e/sapo §7- Opens Mod Menu\n" +
+                            "§e/sapo help §7- Shows this help\n" +
+                            "§e/sapo editarHUD §7- Moves the on-screen texts\n" +
+                            "§e/sapo testar §7- Tests the alerts\n" +
+                            "§e/sapo resolver §7- Solves the Lights Up puzzle\n" +
+                            "§e/sapo limpar §7- Clears particles\n" +
+                            "§e/sapo inspecionar §7- Inspects block\n" +
+                            "§e/sapo debug §7- Toggles sound logs"
                         ));
                         return 1;
                     })
                 )
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("testar")
                     .executes(context -> {
-                        alertaTempoRestante = Config.alertaTempo;
-                        mensagemVivoMorto = Config.textoAlerta;
-                        context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Teste do alerta ativado!"));
+                        alertTimeRemaining = Config.alertTime;
+                        aliveOrDeadMessage = Config.alertText;
+                        context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Alert test activated!"));
                         return 1;
                     })
                 )
@@ -201,7 +200,7 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("editarHUD")
                     .executes(context -> {
                         Minecraft.getInstance().execute(() -> {
-                            Minecraft.getInstance().setScreen(new AlertaHudEditorScreen(Component.literal("Editor de HUD")));
+                            Minecraft.getInstance().setScreen(new AlertHudEditorScreen(Component.literal("HUD Editor")));
                         });
                         return 1;
                     })
@@ -216,8 +215,8 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                 )
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("limpar")
                     .executes(context -> {
-                        SapoPuzzle.solucaoAtiva.clear();
-                        context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Partículas apagadas."));
+                        SapoPuzzle.activeSolution.clear();
+                        context.getSource().getPlayer().sendSystemMessage(Component.literal("§a[Sapo] Particles cleared."));
                         return 1;
                     })
                 )
@@ -228,7 +227,7 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                         
                         HitResult hit = client.player.pick(50.0D, 0.0F, false);
                         if (hit == null || hit.getType() == HitResult.Type.MISS) {
-                            client.player.sendSystemMessage(Component.literal("§c[Sapo] Nenhum bloco detectado. Chegue mais perto ou aponte para um bloco."));
+                            client.player.sendSystemMessage(Component.literal("§c[Sapo] No block detected. Get closer or point to a block."));
                             return 0;
                         }
                         
@@ -243,17 +242,17 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                         
                         Identifier blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
                         System.out.println("==================================");
-                        System.out.println("[Sapo Inspecionar] Bloco: " + blockId.toString() + " em " + blockPos.toShortString());
+                        System.out.println("[Sapo Inspect] Block: " + blockId.toString() + " at " + blockPos.toShortString());
                         
-                        // Agulha fina exatamente no bloco apontado (ignorando os vizinhos)
+                        // Thin needle exactly on the pointed block (ignoring neighbors)
                         AABB box = new AABB(blockPos).inflate(0.1, 1.5, 0.1).move(0, 1, 0); 
                         List<Entity> entities = client.level.getEntities(client.player, box);
                         
                         if (entities.isEmpty()) {
-                            System.out.println("[Sapo Inspecionar] Nenhuma entidade útil nesta coluna.");
+                            System.out.println("[Sapo Inspect] No useful entity in this column.");
                         } else {
                             for (Entity entity : entities) {
-                                // Pular lixo invisível e efeitos
+                                // Skip invisible junk and effects
                                 if (entity instanceof net.minecraft.world.entity.Interaction || 
                                     entity instanceof net.minecraft.world.entity.AreaEffectCloud) {
                                     continue;
@@ -263,10 +262,10 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                                     net.minecraft.world.item.ItemStack stack = itemDisplay.getItemStack();
                                     String itemDesc = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
                                     
-                                    if (itemDesc.contains("air")) continue; // Ignora ar
+                                    if (itemDesc.contains("air")) continue; // Ignore air
 
-                                    String itemModel = "Nenhum";
-                                    String colors = "Nenhuma";
+                                    String itemModel = "None";
+                                    String colors = "None";
                                     String dataStr = stack.getComponents().toString();
                                     
                                     if (dataStr.contains("minecraft:item_model=>")) {
@@ -282,11 +281,11 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                                         if (colorEnd != -1) colors = dataStr.substring(colorStart, colorEnd);
                                     }
 
-                                    System.out.println("-> Holograma: " + itemDesc + " | Modelo: " + itemModel + " | Cor: " + colors);
+                                    System.out.println("-> Hologram: " + itemDesc + " | Model: " + itemModel + " | Color: " + colors);
                                     
                                 } else if (entity instanceof Display.TextDisplay textDisplay) {
                                     if (textDisplay.getText() != null) {
-                                        System.out.println("-> Texto Flutuante: " + textDisplay.getText().getString());
+                                        System.out.println("-> Floating Text: " + textDisplay.getText().getString());
                                     }
                                 } else if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand stand) {
                                     if (stand.hasCustomName()) {
@@ -297,9 +296,9 @@ public class CalcinhaMinimalista implements ClientModInitializer {
                         }
                         System.out.println("==================================");
                         
-                        client.player.sendSystemMessage(Component.literal("§e[Sapo] Bloco Olhado: §f" + blockId.toString()));
-                        client.player.sendSystemMessage(Component.literal("§e[Sapo] Coordenadas: §bX=" + blockPos.getX() + " §aY=" + blockPos.getY() + " §bZ=" + blockPos.getZ()));
-                        client.player.sendSystemMessage(Component.literal("§a[Sapo] Inspeção limpa concluída! Veja o console."));
+                        client.player.sendSystemMessage(Component.literal("§e[Sapo] Looked Block: §f" + blockId.toString()));
+                        client.player.sendSystemMessage(Component.literal("§e[Sapo] Coordinates: §bX=" + blockPos.getX() + " §aY=" + blockPos.getY() + " §bZ=" + blockPos.getZ()));
+                        client.player.sendSystemMessage(Component.literal("§a[Sapo] Clean inspection completed! Check the console."));
                         return 1;
                     })
                 )
@@ -307,28 +306,30 @@ public class CalcinhaMinimalista implements ClientModInitializer {
         });
     }
 
-    public static void tocarSomExterno() {
+    public static void playExternalSound() {
         try {
-            File pastaConfig = new File(FabricLoader.getInstance().getConfigDir().toFile(), "calcinhaminimalista");
-            File arquivoSom = new File(pastaConfig, "sapo_alerta.wav");
-            if (arquivoSom.exists()) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(arquivoSom);
+            File configFolder = new File(FabricLoader.getInstance().getConfigDir().toFile(), "sapo");
+            File soundFile = new File(configFolder, "sapo_alerta.wav");
+            if (soundFile.exists()) {
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
                 Clip clip = AudioSystem.getClip();
                 clip.open(audioStream);
 
                 if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
                     FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                    float volumeNormalizado = Math.max(Config.somVolume, 0.0001f);
-                    float db = (float) (Math.log10(volumeNormalizado) * 20.0f);
+                    float normalizedVolume = Math.max(Config.soundVolume, 0.0001f);
+                    float db = (float) (Math.log10(normalizedVolume) * 20.0f);
                     gainControl.setValue(db);
                 }
 
                 clip.start();
             } else {
-                System.out.println("[Sapo Debug] Arquivo sapo_alerta.wav nao encontrado na pasta config: " + arquivoSom.getAbsolutePath());
+                System.out.println("[Sapo Debug] sapo_alerta.wav file not found in config folder: " + soundFile.getAbsolutePath());
             }
         } catch (Exception e) {
-            System.out.println("[Sapo Debug] Erro ao tocar sapo_alerta.wav: " + e.getMessage());
+            System.out.println("[Sapo Debug] Error playing sapo_alerta.wav: " + e.getMessage());
         }
     }
 }
+
+

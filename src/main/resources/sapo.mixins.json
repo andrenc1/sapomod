@@ -1,7 +1,7 @@
 {
 	"required": true,
-	"package": "com.calcinhaminimalista.mixin",
-	"compatibilityLevel": "JAVA_25",
+	"package": "com.sapo.mixin",
+	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"ExampleMixin"
 	],
