@@ -1,4 +1,4 @@
-﻿package com.sapo;
+package com.sapo;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

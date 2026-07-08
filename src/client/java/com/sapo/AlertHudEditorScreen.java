@@ -1,4 +1,4 @@
-﻿package com.sapo;
+package com.sapo;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;

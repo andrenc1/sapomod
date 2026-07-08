@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "sapo",
+	"id": "sapomod",
 	"version": "${version}",
-	"name": "Sapo",
+	"name": "SapoMod",
 	"description": "Have you seen this man?",
 	"authors": [
 		"BobSponja Calça Quadrada"

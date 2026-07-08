@@ -1,4 +1,4 @@
-﻿package com.sapo;
+package com.sapo;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import javax.sound.sampled.AudioSystem;

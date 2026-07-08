@@ -1,4 +1,4 @@
-﻿package com.sapo;
+package com.sapo;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
