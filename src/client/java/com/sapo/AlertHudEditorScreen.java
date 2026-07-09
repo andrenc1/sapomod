@@ -9,6 +9,7 @@ public class AlertHudEditorScreen extends Screen {
 
     private boolean isDraggingAlert = false;
     private boolean isDraggingAliveOrDead = false;
+    private boolean isDraggingDps = false;
     private double dragOffsetX, dragOffsetY;
 
     public AlertHudEditorScreen(Component title) {
@@ -52,6 +53,22 @@ public class AlertHudEditorScreen extends Screen {
             }
             graphics.pose().popMatrix();
         }
+
+        // Render DPS
+        if (Config.dpsHudEnabled) {
+            String dpsText = "DPS: 125.0"; // Placeholder text for editor
+            int dpsWidth = this.font.width(dpsText);
+            int dpsHeight = this.font.lineHeight;
+
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(Config.dpsHudX, Config.dpsHudY);
+            graphics.pose().scale(Config.dpsHudScale, Config.dpsHudScale);
+            graphics.text(this.font, dpsText, 0, 0, Config.dpsHudColor | 0xFF000000, true);
+            if (isMouseOver(mouseX, mouseY, Config.dpsHudX, Config.dpsHudY, dpsWidth, dpsHeight, Config.dpsHudScale)) {
+                graphics.fill(-2, -2, dpsWidth + 2, dpsHeight + 2, 0x44FFFFFF);
+            }
+            graphics.pose().popMatrix();
+        }
     }
 
     private boolean isMouseOver(double mouseX, double mouseY, int x, int y, int width, int height, float scale) {
@@ -73,6 +90,11 @@ public class AlertHudEditorScreen extends Screen {
                 dragOffsetX = mouseX - Config.aliveOrDeadX;
                 dragOffsetY = mouseY - Config.aliveOrDeadY;
                 return true;
+            } else if (Config.dpsHudEnabled && isMouseOver(mouseX, mouseY, Config.dpsHudX, Config.dpsHudY, this.font.width("DPS: 125.0"), this.font.lineHeight, Config.dpsHudScale)) {
+                isDraggingDps = true;
+                dragOffsetX = mouseX - Config.dpsHudX;
+                dragOffsetY = mouseY - Config.dpsHudY;
+                return true;
             } else if (isMouseOver(mouseX, mouseY, Config.alertX, Config.alertY, this.font.width(Config.alertText), this.font.lineHeight, Config.alertScale)) {
                 isDraggingAlert = true;
                 dragOffsetX = mouseX - Config.alertX;
@@ -92,6 +114,10 @@ public class AlertHudEditorScreen extends Screen {
             Config.aliveOrDeadX = (int) (mouseX - dragOffsetX);
             Config.aliveOrDeadY = (int) (mouseY - dragOffsetY);
             return true;
+        } else if (isDraggingDps) {
+            Config.dpsHudX = (int) (mouseX - dragOffsetX);
+            Config.dpsHudY = (int) (mouseY - dragOffsetY);
+            return true;
         } else if (isDraggingAlert) {
             Config.alertX = (int) (mouseX - dragOffsetX);
             Config.alertY = (int) (mouseY - dragOffsetY);
@@ -102,9 +128,10 @@ public class AlertHudEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (isDraggingAlert || isDraggingAliveOrDead) {
+        if (isDraggingAlert || isDraggingAliveOrDead || isDraggingDps) {
             isDraggingAlert = false;
             isDraggingAliveOrDead = false;
+            isDraggingDps = false;
             Config.save();
             return true;
         }
@@ -120,13 +147,17 @@ public class AlertHudEditorScreen extends Screen {
         double mouseY = this.minecraft.mouseHandler.ypos() * (double)this.minecraft.getWindow().getGuiScaledHeight() / (double)this.minecraft.getWindow().getScreenHeight();
 
         boolean overVM = Config.aliveOrDeadMode && isMouseOver(mouseX, mouseY, Config.aliveOrDeadX, Config.aliveOrDeadY, this.font.width("CROUCH!"), this.font.lineHeight, Config.aliveOrDeadScale);
+        boolean overDps = Config.dpsHudEnabled && isMouseOver(mouseX, mouseY, Config.dpsHudX, Config.dpsHudY, this.font.width("DPS: 125.0"), this.font.lineHeight, Config.dpsHudScale);
         boolean overAlert = isMouseOver(mouseX, mouseY, Config.alertX, Config.alertY, this.font.width(Config.alertText), this.font.lineHeight, Config.alertScale);
 
         if (keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_EQUAL || keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ADD) {
             if (overVM) {
                 Config.aliveOrDeadScale += 0.1f;
                 if (Config.aliveOrDeadScale > 5.0f) Config.aliveOrDeadScale = 5.0f;
-            } else if (overAlert || (!overVM && !overAlert)) { // fallback to alert
+            } else if (overDps) {
+                Config.dpsHudScale += 0.1f;
+                if (Config.dpsHudScale > 5.0f) Config.dpsHudScale = 5.0f;
+            } else if (overAlert || (!overVM && !overDps && !overAlert)) { // fallback to alert
                 Config.alertScale += 0.1f;
                 if (Config.alertScale > 5.0f) Config.alertScale = 5.0f;
             }
@@ -136,7 +167,10 @@ public class AlertHudEditorScreen extends Screen {
             if (overVM) {
                 Config.aliveOrDeadScale -= 0.1f;
                 if (Config.aliveOrDeadScale < 0.5f) Config.aliveOrDeadScale = 0.5f;
-            } else if (overAlert || (!overVM && !overAlert)) {
+            } else if (overDps) {
+                Config.dpsHudScale -= 0.1f;
+                if (Config.dpsHudScale < 0.5f) Config.dpsHudScale = 0.5f;
+            } else if (overAlert || (!overVM && !overDps && !overAlert)) {
                 Config.alertScale -= 0.1f;
                 if (Config.alertScale < 0.5f) Config.alertScale = 0.5f;
             }

@@ -35,6 +35,12 @@ public class Config {
     public static float aliveOrDeadScale = 2.0f;
     public static String soundTriggers = "";
     public static float soundVolume = 1.0f;
+    public static boolean dpsHudEnabled = true;
+    public static int dpsHudX = 10;
+    public static int dpsHudY = 10;
+    public static float dpsHudScale = 1.5f;
+    public static int dpsHudColor = 0xFFFFFF;
+    public static boolean hideDamageNumbers = false;
 
     // Tools for read/write JSON
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -63,6 +69,12 @@ public class Config {
                 aliveOrDeadScale = data.aliveOrDeadScale != 0.0f ? data.aliveOrDeadScale : 2.0f;
                 if (data.soundTriggers != null) soundTriggers = data.soundTriggers;
                 soundVolume = data.soundVolume != 0.0f ? data.soundVolume : 1.0f;
+                dpsHudEnabled = data.dpsHudEnabled;
+                dpsHudX = data.dpsHudX != 0 ? data.dpsHudX : 10;
+                dpsHudY = data.dpsHudY != 0 ? data.dpsHudY : 10;
+                dpsHudScale = data.dpsHudScale != 0.0f ? data.dpsHudScale : 1.5f;
+                dpsHudColor = data.dpsHudColor != 0 ? data.dpsHudColor : 0xFFFFFF;
+                hideDamageNumbers = data.hideDamageNumbers;
             } catch (IOException e) {
                 System.out.println("Error loading Sapo configurations.");
             }
@@ -97,7 +109,7 @@ public class Config {
             CONFIG_DIR.mkdirs();
         }
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(FILE), StandardCharsets.UTF_8)) {
-            SapoData data = new SapoData(active, minCroaks, maxCroaks, devMode, triggerText, alertText, alertX, alertY, alertScale, alertTime, alertColor, aliveOrDeadMode, aliveOrDeadX, aliveOrDeadY, aliveOrDeadScale, soundTriggers, soundVolume);
+            SapoData data = new SapoData(active, minCroaks, maxCroaks, devMode, triggerText, alertText, alertX, alertY, alertScale, alertTime, alertColor, aliveOrDeadMode, aliveOrDeadX, aliveOrDeadY, aliveOrDeadScale, soundTriggers, soundVolume, dpsHudEnabled, dpsHudX, dpsHudY, dpsHudScale, dpsHudColor, hideDamageNumbers);
             GSON.toJson(data, writer);
         } catch (IOException e) {
             System.out.println("Error saving Sapo configurations.");
@@ -139,8 +151,20 @@ public class Config {
         String soundTriggers;
         @SerializedName("somVolume")
         float soundVolume;
+        @SerializedName("dpsHudAtivo")
+        boolean dpsHudEnabled;
+        @SerializedName("dpsHudX")
+        int dpsHudX;
+        @SerializedName("dpsHudY")
+        int dpsHudY;
+        @SerializedName("dpsHudEscala")
+        float dpsHudScale;
+        @SerializedName("dpsHudCor")
+        int dpsHudColor;
+        @SerializedName("ocultarDanoTexto")
+        boolean hideDamageNumbers;
 
-        SapoData(boolean active, int minCroaks, int maxCroaks, boolean devMode, String triggerText, String alertText, int alertX, int alertY, float alertScale, int alertTime, int alertColor, boolean aliveOrDeadMode, int aliveOrDeadX, int aliveOrDeadY, float aliveOrDeadScale, String soundTriggers, float soundVolume) {
+        SapoData(boolean active, int minCroaks, int maxCroaks, boolean devMode, String triggerText, String alertText, int alertX, int alertY, float alertScale, int alertTime, int alertColor, boolean aliveOrDeadMode, int aliveOrDeadX, int aliveOrDeadY, float aliveOrDeadScale, String soundTriggers, float soundVolume, boolean dpsHudEnabled, int dpsHudX, int dpsHudY, float dpsHudScale, int dpsHudColor, boolean hideDamageNumbers) {
             this.active = active;
             this.minCroaks = minCroaks;
             this.maxCroaks = maxCroaks;
@@ -158,6 +182,12 @@ public class Config {
             this.aliveOrDeadScale = aliveOrDeadScale;
             this.soundTriggers = soundTriggers;
             this.soundVolume = soundVolume;
+            this.dpsHudEnabled = dpsHudEnabled;
+            this.dpsHudX = dpsHudX;
+            this.dpsHudY = dpsHudY;
+            this.dpsHudScale = dpsHudScale;
+            this.dpsHudColor = dpsHudColor;
+            this.hideDamageNumbers = hideDamageNumbers;
         }
     }
 }

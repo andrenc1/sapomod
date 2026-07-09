@@ -94,6 +94,27 @@ public class SapoModMenu implements ModMenuApi {
                                         .setSaveConsumer(newValue -> Config.soundVolume = newValue)
                                         .build());
 
+                        ConfigCategory dps = builder.getOrCreateCategory(Component.literal("DPS"));
+
+                        dps.addEntry(entryBuilder
+                                        .startBooleanToggle(Component.literal("Show DPS HUD"), Config.dpsHudEnabled)
+                                        .setDefaultValue(true)
+                                        .setSaveConsumer(newValue -> Config.dpsHudEnabled = newValue)
+                                        .build());
+
+                        dps.addEntry(entryBuilder
+                                        .startBooleanToggle(Component.literal("Hide Damage Numbers"), Config.hideDamageNumbers)
+                                        .setDefaultValue(false)
+                                        .setTooltip(Component.literal("Hides floating numbers to improve FPS"))
+                                        .setSaveConsumer(newValue -> Config.hideDamageNumbers = newValue)
+                                        .build());
+
+                        dps.addEntry(entryBuilder
+                                        .startColorField(Component.literal("DPS Text Color"), Config.dpsHudColor)
+                                        .setDefaultValue(0xFFFFFF)
+                                        .setSaveConsumer(newValue -> Config.dpsHudColor = newValue)
+                                        .build());
+
                         builder.setSavingRunnable(Config::save);
 
                         return builder.build();

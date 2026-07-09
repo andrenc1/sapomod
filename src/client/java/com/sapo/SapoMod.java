@@ -45,22 +45,8 @@ public class SapoMod implements ClientModInitializer {
         Config.load();
         Sapo.registrar();
 
-        ClientEntityEvents.ENTITY_LOAD.register((entity, level) -> {
-            if (Config.devMode) {
-                Minecraft client = Minecraft.getInstance();
-                if (client.player != null && entity.distanceTo(client.player) < 10) {
-                    if (entity instanceof Display.TextDisplay textDisplay) {
-                        if (textDisplay.getText() != null) {
-                            System.out.println("[Sapo DPS Debug] TEXT DISPLAY DETECTED: " + textDisplay.getText().getString());
-                        }
-                    } else if (entity instanceof ArmorStand stand) {
-                        if (stand.hasCustomName()) {
-                            System.out.println("[Sapo DPS Debug] ARMOR STAND DETECTED: " + stand.getCustomName().getString());
-                        }
-                    }
-                }
-            }
-        });
+        // Replaced ENTITY_LOAD with tick check because entity metadata (Text/Name) 
+        // usually arrives *after* the entity is loaded in the world!
 
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             String chatText = message.getString();
@@ -139,6 +125,9 @@ public class SapoMod implements ClientModInitializer {
                 alertTimeRemaining--;
             }
 
+            // DPS tracking logic is now in SapoDPS.java
+            SapoDPS.onTick(client);
+
             // Render particles every 10 ticks (half a second) to avoid crashing the GPU
             if (client.level != null && client.player != null && !SapoPuzzle.activeSolution.isEmpty()) {
                 if (client.player.tickCount % 10 == 0) { 
@@ -166,6 +155,18 @@ public class SapoMod implements ClientModInitializer {
                 graphics.pose().translate(posX, posY);
                 graphics.pose().scale(scale, scale);
                 graphics.text(Minecraft.getInstance().font, formattedText, 0, 0, renderColor, true);
+                graphics.pose().popMatrix();
+            }
+
+            if (Config.dpsHudEnabled && Config.active) {
+                double dps = SapoDPS.getCurrentDPS();
+                String dpsText = "DPS: " + String.format("%.1f", dps);
+                int renderColor = Config.dpsHudColor | 0xFF000000;
+                
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(Config.dpsHudX, Config.dpsHudY);
+                graphics.pose().scale(Config.dpsHudScale, Config.dpsHudScale);
+                graphics.text(Minecraft.getInstance().font, dpsText, 0, 0, renderColor, true);
                 graphics.pose().popMatrix();
             }
         });
