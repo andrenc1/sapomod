@@ -23,7 +23,12 @@ public class AlertHudEditorScreen extends Screen {
         graphics.fill(0, 0, this.width, this.height, 0x88000000);
 
         graphics.text(this.font, "Drag the texts to move them. Use + and - to change the size of the text under the mouse.", 10, 10, 0xFFFFFFFF, true);
-        graphics.text(this.font, "Press ESC to save and exit.", 10, 25, 0xFFAAAAAA, true);
+        graphics.text(this.font, "Press ESC to save and exit. Texts will automatically snap to the center when dragged near it.", 10, 25, 0xFFAAAAAA, true);
+
+        // Draw a center line if dragging
+        if (isDraggingAlert || isDraggingAliveOrDead || isDraggingDps) {
+            graphics.fill(this.width / 2, 0, this.width / 2 + 1, this.height, 0x44FFFFFF);
+        }
 
         // Render Alert
         int alertWidth = this.font.width(Config.alertText);
@@ -104,6 +109,16 @@ public class AlertHudEditorScreen extends Screen {
         }
         return super.mouseClicked(event, bl);
     }
+    
+    private int snapX(int proposedX, int textWidth, float scale) {
+        int center = this.width / 2;
+        int scaledWidth = (int) (textWidth * scale);
+        // Snap to center if within 15 pixels
+        if (Math.abs(proposedX + scaledWidth / 2 - center) < 15) {
+            return center - scaledWidth / 2;
+        }
+        return proposedX;
+    }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
@@ -111,15 +126,18 @@ public class AlertHudEditorScreen extends Screen {
         double mouseY = event.y();
 
         if (isDraggingAliveOrDead) {
-            Config.aliveOrDeadX = (int) (mouseX - dragOffsetX);
+            int proposedX = (int) (mouseX - dragOffsetX);
+            Config.aliveOrDeadX = snapX(proposedX, this.font.width("CROUCH!"), Config.aliveOrDeadScale);
             Config.aliveOrDeadY = (int) (mouseY - dragOffsetY);
             return true;
         } else if (isDraggingDps) {
-            Config.dpsHudX = (int) (mouseX - dragOffsetX);
+            int proposedX = (int) (mouseX - dragOffsetX);
+            Config.dpsHudX = snapX(proposedX, this.font.width("DPS: 125.0"), Config.dpsHudScale);
             Config.dpsHudY = (int) (mouseY - dragOffsetY);
             return true;
         } else if (isDraggingAlert) {
-            Config.alertX = (int) (mouseX - dragOffsetX);
+            int proposedX = (int) (mouseX - dragOffsetX);
+            Config.alertX = snapX(proposedX, this.font.width(Config.alertText), Config.alertScale);
             Config.alertY = (int) (mouseY - dragOffsetY);
             return true;
         }
