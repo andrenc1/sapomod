@@ -1,6 +1,6 @@
-<div align="center">
-  <h1>🐸 Mod Sapo </h1>
-  <p><i>Um mod utilitário para Fabric focado em qualidade de vida, alertas no chat e agora com um poderoso <b>Solver Automático</b> para puzzles Akari (Light Up)!</i></p>
+﻿<div align="center">
+  <h1>🐸 Sapo Mod </h1>
+  <p><i>A utility mod for Fabric focused on quality of life, chat alerts, and now featuring a powerful <b>Automatic Solver</b> for Akari (Light Up) puzzles!</i></p>
   
   ![Fabric](https://img.shields.io/badge/Fabric-1.21-dbb87d?style=for-the-badge&logo=fabric)
   ![Java](https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=java)
@@ -10,63 +10,63 @@
 
 ## ✨ Features
 
-- **🔔 Alertas Personalizados (HUD)**: Configure palavras-chave (gatilhos) que, quando digitadas no chat, exibem um alerta vibrante e customizável diretamente na sua tela!
-- **🧩 Solver de Puzzle Akari Automático**: Um sistema inteligente (usando Backtracking) que escaneia um tabuleiro 10x10 diretamente no mundo do jogo, detecta paredes/números e calcula a solução exata.
-- **✨ Feedback Visual com Partículas**: A solução do puzzle é desenhada no mundo usando partículas verdes (`Happy Villager`) para que você saiba exatamente onde clicar/colocar a luz.
-- **⚙️ Totalmente Configurável**: Mod Menu integrado e uma interface gráfica (Editor de HUD) para você arrastar e soltar o alerta onde quiser na tela.
-- **🔍 Ferramenta de Inspeção**: Comandos embutidos para inspecionar entidades, Hitboxes e blocos diretamente in-game, com saída detalhada no console.
+- **🔔 Custom HUD Alerts**: Configure keyword triggers that display a vibrant and customizable alert directly on your screen when typed in the chat!
+- **🧩 Automatic Akari Puzzle Solver**: A smart system (using Backtracking) that scans a 10x10 board directly in the game world, detects walls/numbers, and calculates the exact solution.
+- **✨ Visual Feedback with Particles**: The puzzle solution is drawn in the world using green particles (`Happy Villager`) so you know exactly where to click or place the light.
+- **⚙️ Fully Configurable**: Integrated Mod Menu and a graphical interface (HUD Editor) allowing you to drag and drop the alert anywhere on the screen.
+- **🔍 Inspection Tool**: Built-in commands to inspect entities, hitboxes, and blocks directly in-game, with detailed output in the console.
 
 ---
 
-## 🚀 Como Usar os Comandos
+## 🚀 How to Use the Commands
 
-A base de todos os comandos do mod é o `/sapo`. Aqui está a lista do que você pode fazer:
+The base for all mod commands is `/sapo`. Here is the list of what you can do:
 
-### 🧩 Puzzle Akari (Light Up)
-- `/sapo resolver` - Escaneia a sala na coordenada configurada, processa o puzzle 10x10 com o algoritmo Backtracking e exibe a solução através de partículas verdes no chão.
-- `/sapo limpar` - Remove todas as partículas do puzzle ativo.
+### 🧩 Akari Puzzle (Light Up)
+- `/sapo resolver` - Scans the room at the configured coordinate, processes the 10x10 puzzle using a backtracking algorithm, and displays the solution through green particles on the floor.
+- `/sapo limpar` - Removes all active puzzle particles.
 
-### 🔔 Alertas HUD
-- `/sapo gatilho <texto>` - Define a palavra que, ao aparecer no chat, vai acionar o alerta (ex: "vivo", "morto", "[Server]").
-- `/sapo alerta <texto>` - Define a mensagem que vai aparecer grande na tela.
-- `/sapo cor <hex>` - Altera a cor do alerta (ex: `FF0000` para vermelho).
-- `/sapo tempo <segundos>` - Quanto tempo o texto vai ficar na tela.
-- `/sapo testar` - Testa as configurações de HUD atuais.
-- `/sapo simular <texto>` - Simula uma mensagem chegando no chat para testar seus gatilhos.
-- `/sapo editarHUD` - Abre a tela interativa para reposicionar o alerta com o mouse.
+### 🔔 HUD Alerts
+- `/sapo gatilho <text>` - Sets the word that, when appearing in chat, will trigger the alert (e.g., "alive", "dead", "[Server]").
+- `/sapo alerta <text>` - Sets the message that will appear large on the screen.
+- `/sapo cor <hex>` - Changes the alert color (e.g., `FF0000` for red).
+- `/sapo tempo <seconds>` - How long the text will stay on the screen.
+- `/sapo testar` - Tests the current HUD configurations.
+- `/sapo simular <text>` - Simulates a message arriving in chat to test your triggers.
+- `/sapo editarHUD` - Opens the interactive screen to reposition the alert with the mouse.
 
-### ⚙️ Utilitários
-- `/sapo` - Abre a tela de Configurações do Mod Menu.
-- `/sapo help` - Exibe a lista completa de comandos no chat.
-- `/sapo inspecionar` - Olhe para um bloco ou entidade e use esse comando para gerar um Log de Debug completo no console (útil para descobrir Nomes, Tags e ItemDisplays).
-- `/sapo debug` - Liga/desliga o modo desenvolvedor.
-
----
-
-## 🛠️ Como o Solver Funciona?
-
-O **SapoPuzzle** é o cérebro por trás da mágica:
-1. **Varredura (Scan)**: O mod checa um grid 10x10 a partir de uma quina fixa no mundo (`X=-346, Y=44, Z=179`). Ele lê os `BlockStates` para encontrar as paredes pretas e usa uma `Hitbox` (`AABB`) expandida para ler os textos (`ItemDisplay`) das dicas numéricas flutuantes (0 a 4).
-2. **Backtracking (Resolução)**: Uma matriz é montada virtualmente. O algoritmo testa a colocação das "lâmpadas" em espaços vazios. Se as regras do jogo *Akari* forem violadas (ex: duas luzes cruzando o mesmo corredor ou parede com quantidade errada), ele volta um passo e tenta outro caminho até encontrar a resposta validada.
-3. **Renderização**: As posições corretas são enviadas para o `ClientTickEvents`, que renderiza magicamente as partículas para o jogador.
-
-> *Dica: Ao usar o `/sapo resolver`, abra o console (Output) do seu client. O mod imprime a representação visual da matriz 10x10 que ele leu e o tempo que demorou para encontrar a solução em milissegundos!*
+### ⚙️ Utilities
+- `/sapo` - Opens the Mod Menu Settings screen.
+- `/sapo help` - Displays the full list of commands in chat.
+- `/sapo inspecionar` - Look at a block or entity and use this command to generate a complete Debug Log in the console (useful for finding Names, Tags, and ItemDisplays).
+- `/sapo debug` - Toggles developer mode on/off.
 
 ---
 
-## 💻 Instalação / Ambiente Dev
+## 🛠️ How Does the Solver Work?
 
-Este projeto utiliza o template **Fabric** e requer **Mojang Mappings (Mojmap)**.
+**SapoPuzzle** is the brain behind the magic:
+1. **Scanning**: The mod checks a 10x10 grid starting from a fixed corner in the world (`X=-346, Y=44, Z=179`). It reads `BlockStates` to find black walls and uses an expanded `Hitbox` (`AABB`) to read the texts (`ItemDisplay`) of the floating numeric hints (0 to 4).
+2. **Backtracking (Resolution)**: A virtual matrix is built. The algorithm tests placing "light bulbs" in empty spaces. If the rules of the *Akari* game are violated (e.g., two lights crossing the same hallway or a wall having the wrong amount of lights), it backtracks a step and tries another path until it finds the validated answer.
+3. **Rendering**: The correct positions are sent to `ClientTickEvents`, which magically renders the particles for the player.
 
-Para compilar o mod localmente:
+> *Tip: When using `/sapo resolver`, open your client`s console (Output). The mod prints the visual representation of the 10x10 matrix it read and the time it took to find the solution in milliseconds!*
+
+---
+
+## 💻 Installation / Dev Environment
+
+This project uses the **Fabric** template and requires **Mojang Mappings (Mojmap)**.
+
+To compile the mod locally:
 ```bash
-# Clone o repositório e rode o Gradle:
+# Clone the repository and run Gradle:
 ./gradlew build
 ```
-O `.jar` final estará na pasta `build/libs/`.
+The final `.jar` will be in the `build/libs/` folder.
 
 ---
 
 <div align="center">
-  Feito com 💚 para automatizar os momentos mais insanos do servidor!
+  Made with 💚 to automate the most insane moments on the server!
 </div>
