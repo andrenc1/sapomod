@@ -45,79 +45,12 @@ public class SapoMod implements ClientModInitializer {
         Config.load();
         Sapo.registrar();
 
-        // Replaced ENTITY_LOAD with tick check because entity metadata (Text/Name) 
-        // usually arrives *after* the entity is loaded in the world!
-
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
-            String chatText = message.getString();
-            Minecraft client = Minecraft.getInstance();
-            if (client.player != null) {
-                String name = client.player.getName().getString();
-                if (chatText.contains(name + " is attempting to solve the edenic light puzzle!")) {
-                    SapoPuzzle.escanearEResolver(client);
-                }
-            }
-
-            if (Config.soundTriggers != null && !Config.soundTriggers.isEmpty()) {
-                // if (Config.devMode) System.out.println("[Sapo Debug] Message received (GAME): " + chatText);
-                // if (Config.devMode) System.out.println("[Sapo Debug] Configured triggers: " + Config.soundTriggers);
-                for (String trigger : Config.soundTriggers.split(",")) {
-                    String cleanT = trigger.trim();
-                    if (!cleanT.isEmpty() && chatText.toLowerCase().contains(cleanT.toLowerCase())) {
-                        // if (Config.devMode) System.out.println("[Sapo Debug] Trigger activated! Playing external sound for: " + cleanT + " | Volume: " + Config.soundVolume);
-                        playExternalSound();
-                        break;
-                    }
-                }
-            }
-
-            if (Config.triggerText != null && !Config.triggerText.isEmpty()) {
-                for (String trigger : Config.triggerText.split(",")) {
-                    String cleanT = trigger.trim();
-                    if (!cleanT.isEmpty() && chatText.contains(cleanT)) {
-                        alertTimeRemaining = Config.alertTime;
-                        aliveOrDeadMessage = Config.alertText;
-                        aliveOrDeadColor = 0;
-                        break;
-                    }
-                }
-            }
+            handleChatMessage(message.getString());
         });
 
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
-            String chatText = message.getString();
-            Minecraft client = Minecraft.getInstance();
-            if (client.player != null) {
-                String name = client.player.getName().getString();
-                if (chatText.contains(name + " is attempting to solve the edenic light puzzle!")) {
-                    SapoPuzzle.escanearEResolver(client);
-                }
-            }
-
-            if (Config.soundTriggers != null && !Config.soundTriggers.isEmpty()) {
-                // if (Config.devMode) System.out.println("[Sapo Debug] Message received (CHAT): " + chatText);
-                // if (Config.devMode) System.out.println("[Sapo Debug] Configured triggers: " + Config.soundTriggers);
-                for (String trigger : Config.soundTriggers.split(",")) {
-                    String cleanT = trigger.trim();
-                    if (!cleanT.isEmpty() && chatText.toLowerCase().contains(cleanT.toLowerCase())) {
-                        // if (Config.devMode) System.out.println("[Sapo Debug] Trigger activated! Playing external sound for: " + cleanT + " | Volume: " + Config.soundVolume);
-                        playExternalSound();
-                        break;
-                    }
-                }
-            }
-
-            if (Config.triggerText != null && !Config.triggerText.isEmpty()) {
-                for (String trigger : Config.triggerText.split(",")) {
-                    String cleanT = trigger.trim();
-                    if (!cleanT.isEmpty() && chatText.contains(cleanT)) {
-                        alertTimeRemaining = Config.alertTime;
-                        aliveOrDeadMessage = Config.alertText;
-                        aliveOrDeadColor = 0;
-                        break;
-                    }
-                }
-            }
+            handleChatMessage(message.getString());
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -201,7 +134,6 @@ public class SapoMod implements ClientModInitializer {
                             "§e/sapo testar §7- Tests the alerts\n" +
                             "§e/sapo resolver §7- Solves the Lights Up puzzle\n" +
                             "§e/sapo limpar §7- Clears particles\n" +
-                            // "§e/sapo inspecionar §7- Inspects block\n" +
                             "§e/sapo debug §7- Toggles dev logs"
                         ));
                         return 1;
@@ -239,116 +171,73 @@ public class SapoMod implements ClientModInitializer {
                         return 1;
                     })
                 )
-                /* Commented out as requested
-                .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("inspecionar")
-                    .executes(context -> {
-                        Minecraft client = Minecraft.getInstance();
-                        if (client.player == null || client.level == null) return 0;
-                        
-                        HitResult hit = client.player.pick(50.0D, 0.0F, false);
-                        if (hit == null || hit.getType() == HitResult.Type.MISS) {
-                            client.player.sendSystemMessage(Component.literal("§c[Sapo] No block detected. Get closer or point to a block."));
-                            return 0;
-                        }
-                        
-                        Vec3 hitPos = hit.getLocation();
-                        BlockPos blockPos;
-                        if (hit instanceof BlockHitResult) {
-                            blockPos = ((BlockHitResult) hit).getBlockPos();
-                        } else {
-                            blockPos = BlockPos.containing(hitPos);
-                        }
-                        BlockState state = client.level.getBlockState(blockPos);
-                        
-                        Identifier blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-                        System.out.println("==================================");
-                        System.out.println("[Sapo Inspect] Block: " + blockId.toString() + " at " + blockPos.toShortString());
-                        
-                        // Thin needle exactly on the pointed block (ignoring neighbors)
-                        AABB box = new AABB(blockPos).inflate(0.1, 1.5, 0.1).move(0, 1, 0); 
-                        List<Entity> entities = client.level.getEntities(client.player, box);
-                        
-                        if (entities.isEmpty()) {
-                            System.out.println("[Sapo Inspect] No useful entity in this column.");
-                        } else {
-                            for (Entity entity : entities) {
-                                // Skip invisible junk and effects
-                                if (entity instanceof net.minecraft.world.entity.Interaction || 
-                                    entity instanceof net.minecraft.world.entity.AreaEffectCloud) {
-                                    continue;
-                                }
-
-                                if (entity instanceof Display.ItemDisplay itemDisplay) {
-                                    net.minecraft.world.item.ItemStack stack = itemDisplay.getItemStack();
-                                    String itemDesc = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-                                    
-                                    if (itemDesc.contains("air")) continue; // Ignore air
-
-                                    String itemModel = "None";
-                                    String colors = "None";
-                                    String dataStr = stack.getComponents().toString();
-                                    
-                                    if (dataStr.contains("minecraft:item_model=>")) {
-                                        int modelStart = dataStr.indexOf("minecraft:item_model=>") + 22;
-                                        int modelEnd = dataStr.indexOf(",", modelStart);
-                                        if (modelEnd == -1) modelEnd = dataStr.indexOf("}", modelStart);
-                                        if (modelEnd != -1) itemModel = dataStr.substring(modelStart, modelEnd);
-                                    }
-                                    
-                                    if (dataStr.contains("colors=[")) {
-                                        int colorStart = dataStr.indexOf("colors=[") + 8;
-                                        int colorEnd = dataStr.indexOf("]", colorStart);
-                                        if (colorEnd != -1) colors = dataStr.substring(colorStart, colorEnd);
-                                    }
-
-                                    System.out.println("-> Hologram: " + itemDesc + " | Model: " + itemModel + " | Color: " + colors);
-                                    
-                                } else if (entity instanceof Display.TextDisplay textDisplay) {
-                                    if (textDisplay.getText() != null) {
-                                        System.out.println("-> Floating Text: " + textDisplay.getText().getString());
-                                    }
-                                } else if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand stand) {
-                                    if (stand.hasCustomName()) {
-                                        System.out.println("-> Armor Stand: " + stand.getCustomName().getString());
-                                    }
-                                }
-                            }
-                        }
-                        System.out.println("==================================");
-                        
-                        client.player.sendSystemMessage(Component.literal("§e[Sapo] Looked Block: §f" + blockId.toString()));
-                        client.player.sendSystemMessage(Component.literal("§e[Sapo] Coordinates: §bX=" + blockPos.getX() + " §aY=" + blockPos.getY() + " §bZ=" + blockPos.getZ()));
-                        client.player.sendSystemMessage(Component.literal("§a[Sapo] Clean inspection completed! Check the console."));
-                        return 1;
-                    })
-                )
-                */
             );
         });
     }
 
-    public static void playExternalSound() {
-        try {
-            File configFolder = new File(FabricLoader.getInstance().getConfigDir().toFile(), "sapo");
-            File soundFile = new File(configFolder, "sapo_alerta.wav");
-            if (soundFile.exists()) {
-                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
-                Clip clip = AudioSystem.getClip();
-                clip.open(audioStream);
-
-                if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-                    FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                    float normalizedVolume = Math.max(Config.soundVolume, 0.0001f);
-                    float db = (float) (Math.log10(normalizedVolume) * 20.0f);
-                    gainControl.setValue(db);
-                }
-
-                clip.start();
-            } else {
-                // if (Config.devMode) System.out.println("[Sapo Debug] sapo_alerta.wav file not found in config folder: " + soundFile.getAbsolutePath());
+    private void handleChatMessage(String chatText) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player != null) {
+            String name = client.player.getName().getString();
+            if (chatText.contains(name + " is attempting to solve the edenic light puzzle!")) {
+                SapoPuzzle.escanearEResolver(client);
             }
-        } catch (Exception e) {
-            // if (Config.devMode) System.out.println("[Sapo Debug] Error playing sapo_alerta.wav: " + e.getMessage());
         }
+
+        // Use pre-parsed arrays instead of doing regex splits every message
+        if (Config.parsedSoundTriggers.length > 0) {
+            String lowerChat = chatText.toLowerCase();
+            for (String trigger : Config.parsedSoundTriggers) {
+                if (!trigger.isEmpty() && lowerChat.contains(trigger)) {
+                    playExternalSound();
+                    break;
+                }
+            }
+        }
+
+        if (Config.parsedTextTriggers.length > 0) {
+            for (String trigger : Config.parsedTextTriggers) {
+                if (!trigger.isEmpty() && chatText.contains(trigger)) {
+                    alertTimeRemaining = Config.alertTime;
+                    aliveOrDeadMessage = Config.alertText;
+                    aliveOrDeadColor = 0;
+                    break;
+                }
+            }
+        }
+    }
+
+    public static void playExternalSound() {
+        // Run audio loading and playback in a separate thread to avoid freezing the game
+        new Thread(() -> {
+            try {
+                File configFolder = new File(FabricLoader.getInstance().getConfigDir().toFile(), "sapo");
+                File soundFile = new File(configFolder, "sapo_alerta.wav");
+                if (soundFile.exists()) {
+                    AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
+                    Clip clip = AudioSystem.getClip();
+                    clip.open(audioStream);
+
+                    if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                        FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                        float normalizedVolume = Math.max(Config.soundVolume, 0.0001f);
+                        float db = (float) (Math.log10(normalizedVolume) * 20.0f);
+                        gainControl.setValue(db);
+                    }
+
+                    // Properly close resources when sound finishes to prevent memory leak
+                    clip.addLineListener(event -> {
+                        if (event.getType() == javax.sound.sampled.LineEvent.Type.STOP) {
+                            clip.close();
+                            try { audioStream.close(); } catch (Exception ignored) {}
+                        }
+                    });
+
+                    clip.start();
+                }
+            } catch (Exception e) {
+                // Ignore audio errors in background thread
+            }
+        }, "SapoAudioThread").start();
     }
 }

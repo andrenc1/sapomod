@@ -42,10 +42,34 @@ public class Config {
     public static int dpsHudColor = 0xFFFFFF;
     public static boolean hideDamageNumbers = false;
 
+    // Parsed triggers for performance
+    public static String[] parsedSoundTriggers = new String[0];
+    public static String[] parsedTextTriggers = new String[0];
+
     // Tools for read/write JSON
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_DIR = new File(FabricLoader.getInstance().getConfigDir().toFile(), "sapo");
     private static final File FILE = new File(CONFIG_DIR, "sapo_config.json");
+
+    public static void updateParsedTriggers() {
+        if (soundTriggers != null && !soundTriggers.isEmpty()) {
+            parsedSoundTriggers = soundTriggers.split(",");
+            for (int i = 0; i < parsedSoundTriggers.length; i++) {
+                parsedSoundTriggers[i] = parsedSoundTriggers[i].trim().toLowerCase();
+            }
+        } else {
+            parsedSoundTriggers = new String[0];
+        }
+
+        if (triggerText != null && !triggerText.isEmpty()) {
+            parsedTextTriggers = triggerText.split(",");
+            for (int i = 0; i < parsedTextTriggers.length; i++) {
+                parsedTextTriggers[i] = parsedTextTriggers[i].trim();
+            }
+        } else {
+            parsedTextTriggers = new String[0];
+        }
+    }
 
     // Method to load config
     public static void load() {
@@ -81,6 +105,7 @@ public class Config {
         } else {
             save(); // Create default if missing
         }
+        updateParsedTriggers();
         extractDefaultSound();
     }
 
@@ -105,6 +130,7 @@ public class Config {
 
     // Method to save
     public static void save() {
+        updateParsedTriggers();
         if (!CONFIG_DIR.exists()) {
             CONFIG_DIR.mkdirs();
         }
