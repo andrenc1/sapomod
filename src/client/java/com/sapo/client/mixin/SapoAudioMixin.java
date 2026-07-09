@@ -26,9 +26,9 @@ public class SapoAudioMixin {
                     com.sapo.SapoMod.aliveOrDeadColor = 0x5555FF;
                 }
             }
-            if (com.sapo.Config.devMode) {
-                System.out.println("[Sapo Debug] Playing sound: " + sound + " | Volume: " + sound.getVolume() + " | Pitch: " + sound.getPitch());
-            }
+            // if (com.sapo.Config.devMode) {
+            //     System.out.println("[Sapo Debug] Playing sound: " + sound + " | Volume: " + sound.getVolume() + " | Pitch: " + sound.getPitch());
+            // }
         } catch (Exception e) {
             System.out.println("[Sapo Debug] Error getting sound: " + e.getMessage());
             e.printStackTrace();

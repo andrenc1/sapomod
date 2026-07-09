@@ -16,6 +16,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import net.minecraft.client.Minecraft;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.HitResult;
@@ -44,6 +45,23 @@ public class SapoMod implements ClientModInitializer {
         Config.load();
         Sapo.registrar();
 
+        ClientEntityEvents.ENTITY_LOAD.register((entity, level) -> {
+            if (Config.devMode) {
+                Minecraft client = Minecraft.getInstance();
+                if (client.player != null && entity.distanceTo(client.player) < 10) {
+                    if (entity instanceof Display.TextDisplay textDisplay) {
+                        if (textDisplay.getText() != null) {
+                            System.out.println("[Sapo DPS Debug] TEXT DISPLAY DETECTED: " + textDisplay.getText().getString());
+                        }
+                    } else if (entity instanceof ArmorStand stand) {
+                        if (stand.hasCustomName()) {
+                            System.out.println("[Sapo DPS Debug] ARMOR STAND DETECTED: " + stand.getCustomName().getString());
+                        }
+                    }
+                }
+            }
+        });
+
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
             String chatText = message.getString();
             Minecraft client = Minecraft.getInstance();
@@ -55,12 +73,12 @@ public class SapoMod implements ClientModInitializer {
             }
 
             if (Config.soundTriggers != null && !Config.soundTriggers.isEmpty()) {
-                System.out.println("[Sapo Debug] Message received (GAME): " + chatText);
-                System.out.println("[Sapo Debug] Configured triggers: " + Config.soundTriggers);
+                // if (Config.devMode) System.out.println("[Sapo Debug] Message received (GAME): " + chatText);
+                // if (Config.devMode) System.out.println("[Sapo Debug] Configured triggers: " + Config.soundTriggers);
                 for (String trigger : Config.soundTriggers.split(",")) {
                     String cleanT = trigger.trim();
                     if (!cleanT.isEmpty() && chatText.toLowerCase().contains(cleanT.toLowerCase())) {
-                        System.out.println("[Sapo Debug] Trigger activated! Playing external sound for: " + cleanT + " | Volume: " + Config.soundVolume);
+                        // if (Config.devMode) System.out.println("[Sapo Debug] Trigger activated! Playing external sound for: " + cleanT + " | Volume: " + Config.soundVolume);
                         playExternalSound();
                         break;
                     }
@@ -91,12 +109,12 @@ public class SapoMod implements ClientModInitializer {
             }
 
             if (Config.soundTriggers != null && !Config.soundTriggers.isEmpty()) {
-                System.out.println("[Sapo Debug] Message received (CHAT): " + chatText);
-                System.out.println("[Sapo Debug] Configured triggers: " + Config.soundTriggers);
+                // if (Config.devMode) System.out.println("[Sapo Debug] Message received (CHAT): " + chatText);
+                // if (Config.devMode) System.out.println("[Sapo Debug] Configured triggers: " + Config.soundTriggers);
                 for (String trigger : Config.soundTriggers.split(",")) {
                     String cleanT = trigger.trim();
                     if (!cleanT.isEmpty() && chatText.toLowerCase().contains(cleanT.toLowerCase())) {
-                        System.out.println("[Sapo Debug] Trigger activated! Playing external sound for: " + cleanT + " | Volume: " + Config.soundVolume);
+                        // if (Config.devMode) System.out.println("[Sapo Debug] Trigger activated! Playing external sound for: " + cleanT + " | Volume: " + Config.soundVolume);
                         playExternalSound();
                         break;
                     }
@@ -160,7 +178,7 @@ public class SapoMod implements ClientModInitializer {
                         Config.save();
                         String state = Config.devMode ? "§2ON" : "§cOFF";
                         context.getSource().getPlayer().sendSystemMessage(
-                                Component.literal("§a[Sapo] Sound Dev Mode: " + state)
+                                Component.literal("§a[Sapo] Dev Mode: " + state)
                         );
                         return 1;
                     })
@@ -182,8 +200,8 @@ public class SapoMod implements ClientModInitializer {
                             "§e/sapo testar §7- Tests the alerts\n" +
                             "§e/sapo resolver §7- Solves the Lights Up puzzle\n" +
                             "§e/sapo limpar §7- Clears particles\n" +
-                            "§e/sapo inspecionar §7- Inspects block\n" +
-                            "§e/sapo debug §7- Toggles sound logs"
+                            // "§e/sapo inspecionar §7- Inspects block\n" +
+                            "§e/sapo debug §7- Toggles dev logs"
                         ));
                         return 1;
                     })
@@ -220,6 +238,7 @@ public class SapoMod implements ClientModInitializer {
                         return 1;
                     })
                 )
+                /* Commented out as requested
                 .then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("inspecionar")
                     .executes(context -> {
                         Minecraft client = Minecraft.getInstance();
@@ -302,6 +321,7 @@ public class SapoMod implements ClientModInitializer {
                         return 1;
                     })
                 )
+                */
             );
         });
     }
@@ -324,12 +344,10 @@ public class SapoMod implements ClientModInitializer {
 
                 clip.start();
             } else {
-                System.out.println("[Sapo Debug] sapo_alerta.wav file not found in config folder: " + soundFile.getAbsolutePath());
+                // if (Config.devMode) System.out.println("[Sapo Debug] sapo_alerta.wav file not found in config folder: " + soundFile.getAbsolutePath());
             }
         } catch (Exception e) {
-            System.out.println("[Sapo Debug] Error playing sapo_alerta.wav: " + e.getMessage());
+            // if (Config.devMode) System.out.println("[Sapo Debug] Error playing sapo_alerta.wav: " + e.getMessage());
         }
     }
 }
-
-

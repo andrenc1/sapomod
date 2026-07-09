@@ -33,8 +33,8 @@ public class SapoPuzzle {
         // Exact top-left corner of the board
         BlockPos topLeft = new BlockPos(-346, 43, 179);
 
-        client.player.sendSystemMessage(Component.literal("§e[Sapo] Scanning the board globally..."));
-        System.out.println("[Sapo Debug] Starting global scan from: " + topLeft.toShortString());
+        // client.player.sendSystemMessage(Component.literal("§e[Sapo] Scanning the board globally..."));
+        // if (Config.devMode) System.out.println("[Sapo Debug] Starting global scan from: " + topLeft.toShortString());
 
         // GIANT BOX: Swallows the entire 10x10 room at once!
         AABB roomBox = new AABB(
@@ -79,18 +79,18 @@ public class SapoPuzzle {
             }
         }
 
-        System.out.println("[Sapo Debug] Board read successfully (10x10 matrix):");
-        for (int i = 0; i < 10; i++) {
-            System.out.println("[Sapo Debug] " + new String(grid[i]));
-        }
+        // if (Config.devMode) System.out.println("[Sapo Debug] Board read successfully (10x10 matrix):");
+        // for (int i = 0; i < 10; i++) {
+        //     if (Config.devMode) System.out.println("[Sapo Debug] " + new String(grid[i]));
+        // }
 
         if (!foundWall) {
-            System.out.println("[Sapo Debug] CRITICAL WARNING: No black entity or number detected!");
-            client.player.sendSystemMessage(Component.literal("§c[Sapo] Scan cancelled: Holographic Board seems empty."));
+            // if (Config.devMode) System.out.println("[Sapo Debug] CRITICAL WARNING: No black entity or number detected!");
+            // client.player.sendSystemMessage(Component.literal("§c[Sapo] Scan cancelled: Holographic Board seems empty."));
             return;
         }
 
-        System.out.println("[Sapo Debug] Starting Solver algorithm (Backtracking)...");
+        // if (Config.devMode) System.out.println("[Sapo Debug] Starting Solver algorithm (Backtracking)...");
         startTime = System.currentTimeMillis();
 
         boolean[][] bulbs = new boolean[10][10];
@@ -99,8 +99,8 @@ public class SapoPuzzle {
         long endTime = System.currentTimeMillis();
 
         if (solved) {
-            System.out.println("[Sapo Debug] SUCCESS! Solved in " + (endTime - startTime) + "ms.");
-            client.player.sendSystemMessage(Component.literal("§a[Sapo] Puzzle solved! Follow the green particles."));
+            // if (Config.devMode) System.out.println("[Sapo Debug] SUCCESS! Solved in " + (endTime - startTime) + "ms.");
+            // client.player.sendSystemMessage(Component.literal("§a[Sapo] Puzzle solved! Follow the green particles."));
             for (int r = 0; r < 10; r++) {
                 for (int c = 0; c < 10; c++) {
                     if (bulbs[r][c]) {
@@ -109,8 +109,8 @@ public class SapoPuzzle {
                 }
             }
         } else {
-            System.out.println("[Sapo Debug] FAILED! Algorithm found no possible solution.");
-            client.player.sendSystemMessage(Component.literal("§c[Sapo] Failed to solve. Check the console."));
+            // if (Config.devMode) System.out.println("[Sapo Debug] FAILED! Algorithm found no possible solution.");
+            // client.player.sendSystemMessage(Component.literal("§c[Sapo] Failed to solve. Check the console."));
         }
     }
 
@@ -271,4 +271,3 @@ public class SapoPuzzle {
         return true;
     }
 }
-
