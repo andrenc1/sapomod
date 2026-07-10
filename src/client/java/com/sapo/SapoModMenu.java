@@ -7,6 +7,11 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class SapoModMenu implements ModMenuApi {
 
         @Override
@@ -48,11 +53,12 @@ public class SapoModMenu implements ModMenuApi {
                                         .setSaveConsumer(newValue -> Config.aliveOrDeadMode = newValue)
                                         .build());
 
+                        List<String> currentTriggerText = Config.triggerText.isEmpty() ? new ArrayList<>() : Arrays.stream(Config.triggerText.split(",")).map(String::trim).collect(Collectors.toList());
+
                         alerts.addEntry(entryBuilder
-                                        .startStrField(Component.literal("Trigger Text(s) (use comma)"),
-                                                        Config.triggerText)
-                                        .setDefaultValue("")
-                                        .setSaveConsumer(newValue -> Config.triggerText = newValue)
+                                        .startStrList(Component.literal("Trigger Text(s)"), currentTriggerText)
+                                        .setDefaultValue(new ArrayList<>())
+                                        .setSaveConsumer(newValue -> Config.triggerText = String.join(",", newValue))
                                         .build());
 
                         alerts.addEntry(entryBuilder
@@ -77,12 +83,13 @@ public class SapoModMenu implements ModMenuApi {
 
                         ConfigCategory sounds = builder.getOrCreateCategory(Component.literal("Sounds"));
 
+                        List<String> currentSoundTriggers = Config.soundTriggers.isEmpty() ? new ArrayList<>() : Arrays.stream(Config.soundTriggers.split(",")).map(String::trim).collect(Collectors.toList());
+
                         sounds.addEntry(entryBuilder
-                                        .startStrField(Component.literal("Sound Triggers (use comma)"),
-                                                        Config.soundTriggers)
-                                        .setDefaultValue("")
+                                        .startStrList(Component.literal("Sound Triggers"), currentSoundTriggers)
+                                        .setDefaultValue(new ArrayList<>())
                                         .setTooltip(Component.literal("Messages that will trigger the alert sound"))
-                                        .setSaveConsumer(newValue -> Config.soundTriggers = newValue)
+                                        .setSaveConsumer(newValue -> Config.soundTriggers = String.join(",", newValue))
                                         .build());
 
                         sounds.addEntry(entryBuilder
