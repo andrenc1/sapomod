@@ -71,18 +71,15 @@ public class SapoDPS {
                     System.out.println("[Sapo DPS Debug] Hex: " + hex.toString().trim());
                 }
 
-                // Ignore health bars, percentages, and common boss health indicators
-                String lowerText = plainText.toLowerCase();
-                if (plainText.contains("/") || plainText.contains("%") || plainText.contains("❤") || plainText.contains("\u2764") ||
-                    plainText.contains("[") || plainText.contains("]") || plainText.contains("|") || 
-                    lowerText.contains("hp") || lowerText.contains("health") || plainText.contains(":")) {
+                // Ignore health bars or percentages
+                if (plainText.contains("/") || plainText.contains("%") || plainText.contains("❤") || plainText.contains("\u2764")) {
                     continue;
                 }
 
                 double damage = parseTelosDamage(plainText);
                 
-                // Capped at 10,000,000 to prevent boss HP bar bug
-                if (damage > 0 && damage < 10000000) {
+                // Capped at 1,000,000 to prevent boss HP bar bug
+                if (damage > 0 && damage < 1000000) {
                     registerDamage(damage);
                     if (Config.devMode) {
                         System.out.println("[Sapo DPS Debug] Parsed Custom Damage: " + damage);
@@ -92,38 +89,20 @@ public class SapoDPS {
                     }
                 } else if (damage == 0) {
                     // Try to parse regular numbers for normal mobs
-                    boolean hasInvalidLetters = false;
+                    boolean hasLetters = false;
                     boolean hasDigits = false;
-                    for (char c : lowerText.toCharArray()) {
-                        if (Character.isDigit(c)) {
-                            hasDigits = true;
-                        } else if (Character.isLetter(c)) {
-                            // Only allow 'k' and 'm' for thousands/millions
-                            if (c != 'k' && c != 'm') {
-                                hasInvalidLetters = true;
-                                break;
-                            }
-                        }
+                    for (char c : plainText.toCharArray()) {
+                        if (Character.isLetter(c)) hasLetters = true;
+                        if (Character.isDigit(c)) hasDigits = true;
                     }
                     
-                    // If it has digits and no invalid letters, it's likely a normal damage indicator
-                    if (hasDigits && !hasInvalidLetters) {
+                    // If it has digits and no letters, it's likely a normal damage indicator
+                    if (hasDigits && !hasLetters) {
                         try {
-                            String numStr = lowerText.replaceAll("[^0-9.km]", "");
-                            double multiplier = 1.0;
-                            if (numStr.endsWith("k")) {
-                                multiplier = 1000.0;
-                                numStr = numStr.substring(0, numStr.length() - 1);
-                            } else if (numStr.endsWith("m")) {
-                                multiplier = 1000000.0;
-                                numStr = numStr.substring(0, numStr.length() - 1);
-                            }
-                            
-                            numStr = numStr.replaceAll("[km]", ""); // clean any extra
-                            
-                            if (!numStr.isEmpty() && !numStr.equals(".")) {
-                                double normalDamage = Double.parseDouble(numStr) * multiplier;
-                                if (normalDamage > 0 && normalDamage < 10000000) {
+                            String numStr = plainText.replaceAll("[^0-9.]", "");
+                            if (!numStr.isEmpty()) {
+                                double normalDamage = Double.parseDouble(numStr);
+                                if (normalDamage > 0 && normalDamage < 1000000) {
                                     registerDamage(normalDamage);
                                     if (Config.devMode) {
                                         System.out.println("[Sapo DPS Debug] Parsed Normal Damage: " + normalDamage);
@@ -152,43 +131,23 @@ public class SapoDPS {
                     sb.append((char) ('0' + (next - '\uDC25')));
                 } else if (next >= '\uDC00' && next <= '\uDC03') {
                     sb.append((char) ('6' + (next - '\uDC00')));
-                } else if (next == '\uDC4F' || next == '\uDC4E' || next == '\uDC4D') {
+                } else if (next == '\uDC4F' || next == '\uDC4E') {
                     sb.append('.');
-                } else if (next == '\uDC50') {
-                    sb.append('k');
                 }
                 i++;
             } 
-            // New Telos font 0-5 and newer fonts
+            // New Telos font 0-5
             else if (c == '\uD817' && i + 1 < plainText.length()) {
                 char next = plainText.charAt(i + 1);
                 if (next >= '\uDFFA' && next <= '\uDFFF') {
                     sb.append((char) ('0' + (next - '\uDFFA')));
-                } else if (next >= '\uDFCB' && next <= '\uDFD4') { // Newest font 0-9
-                    sb.append((char) ('0' + (next - '\uDFCB')));
-                } else if (next == '\uDFD5') { // Newest font 'k'
-                    sb.append('k');
                 }
                 i++;
             }
         }
-        
-        String res = sb.toString();
-        if (res.length() > 0) {
+        if (sb.length() > 0) {
             try {
-                double multiplier = 1.0;
-                if (res.endsWith("k")) {
-                    multiplier = 1000.0;
-                    res = res.substring(0, res.length() - 1);
-                } else if (res.endsWith("m")) {
-                    multiplier = 1000000.0;
-                    res = res.substring(0, res.length() - 1);
-                }
-                
-                res = res.replaceAll("[^0-9.]", "");
-                if (res.isEmpty() || res.equals(".")) return 0;
-                
-                return Double.parseDouble(res) * multiplier;
+                return Double.parseDouble(sb.toString());
             } catch (Exception e) {
                 return 0;
             }

@@ -104,9 +104,9 @@ public class SapoMod implements ClientModInitializer {
                     long time = System.currentTimeMillis();
                     for (int i = 0; i < dpsText.length(); i++) {
                         String letter = String.valueOf(dpsText.charAt(i));
-                        // Chroma effect for each letter (lighter colors)
+                        // Chroma effect for each letter
                         float hue = ((time + (i * 150)) % 2000L) / 2000.0f;
-                        int charColor = java.awt.Color.HSBtoRGB(hue, 0.55f, 1.0f) | 0xFF000000;
+                        int charColor = java.awt.Color.HSBtoRGB(hue, 1.0f, 1.0f) | 0xFF000000;
                         
                         // Wave and slight shake effect
                         float waveY = (float) Math.sin((time * 0.015) + (i * 0.5)) * 2.5f;
