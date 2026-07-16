@@ -116,11 +116,7 @@ public class SapoModMenu implements ModMenuApi {
                                         .setSaveConsumer(newValue -> Config.hideDamageNumbers = newValue)
                                         .build());
 
-                        dps.addEntry(entryBuilder
-                                        .startColorField(Component.literal("DPS Text Color"), Config.dpsHudColor)
-                                        .setDefaultValue(0xFFFFFF)
-                                        .setSaveConsumer(newValue -> Config.dpsHudColor = newValue)
-                                        .build());
+
 
                         builder.setSavingRunnable(Config::save);
 

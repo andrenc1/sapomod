@@ -76,7 +76,7 @@ public class SapoMod implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.parse("sapo:alert"), (graphics, tracker) -> {
             if (alertTimeRemaining > 0) {
                 String text = Config.aliveOrDeadMode && aliveOrDeadColor != 0 ? aliveOrDeadMessage : Config.alertText;
-                String formattedText = "§l" + text;
+                String formattedText = text;
                 int renderColor = (Config.aliveOrDeadMode && aliveOrDeadColor != 0) ? aliveOrDeadColor : Config.alertColor;
                 renderColor |= 0xFF000000;
                 
@@ -94,12 +94,41 @@ public class SapoMod implements ClientModInitializer {
             if (Config.dpsHudEnabled && Config.active) {
                 double dps = SapoDPS.getCurrentDPS();
                 String dpsText = "DPS: " + String.format("%.1f", dps);
-                int renderColor = Config.dpsHudColor | 0xFF000000;
                 
                 graphics.pose().pushMatrix();
                 graphics.pose().translate(Config.dpsHudX, Config.dpsHudY);
                 graphics.pose().scale(Config.dpsHudScale, Config.dpsHudScale);
-                graphics.text(Minecraft.getInstance().font, dpsText, 0, 0, renderColor, true);
+                
+                if (dps >= 600) {
+                    int xOffset = 0;
+                    long time = System.currentTimeMillis();
+                    for (int i = 0; i < dpsText.length(); i++) {
+                        String letter = String.valueOf(dpsText.charAt(i));
+                        // Chroma effect for each letter
+                        float hue = ((time + (i * 150)) % 2000L) / 2000.0f;
+                        int charColor = java.awt.Color.HSBtoRGB(hue, 1.0f, 1.0f) | 0xFF000000;
+                        
+                        // Wave and slight shake effect
+                        float waveY = (float) Math.sin((time * 0.015) + (i * 0.5)) * 2.5f;
+                        float shakeX = (float) (Math.random() * 1.5 - 0.75);
+                        float shakeY = (float) (Math.random() * 1.5 - 0.75);
+                        
+                        graphics.text(Minecraft.getInstance().font, letter, xOffset + (int)shakeX, (int)(waveY + shakeY), charColor, true);
+                        xOffset += Minecraft.getInstance().font.width(letter);
+                    }
+                } else {
+                    int renderColor;
+                    if (dps >= 350) {
+                        renderColor = 0xFF5555; // Red
+                    } else if (dps >= 150) {
+                        renderColor = 0xFFFF55; // Yellow
+                    } else {
+                        renderColor = 0x55FF55; // Green
+                    }
+                    renderColor |= 0xFF000000;
+                    graphics.text(Minecraft.getInstance().font, dpsText, 0, 0, renderColor, true);
+                }
+                
                 graphics.pose().popMatrix();
             }
         });

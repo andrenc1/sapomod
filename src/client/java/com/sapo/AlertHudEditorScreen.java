@@ -59,7 +59,6 @@ public class AlertHudEditorScreen extends Screen {
             graphics.pose().popMatrix();
         }
 
-        // Render DPS
         if (Config.dpsHudEnabled) {
             String dpsText = "DPS: 125.0"; // Placeholder text for editor
             int dpsWidth = this.font.width(dpsText);
@@ -68,7 +67,8 @@ public class AlertHudEditorScreen extends Screen {
             graphics.pose().pushMatrix();
             graphics.pose().translate(Config.dpsHudX, Config.dpsHudY);
             graphics.pose().scale(Config.dpsHudScale, Config.dpsHudScale);
-            graphics.text(this.font, dpsText, 0, 0, Config.dpsHudColor | 0xFF000000, true);
+            // 125.0 DPS corresponds to Green color
+            graphics.text(this.font, dpsText, 0, 0, 0x55FF55 | 0xFF000000, true);
             if (isMouseOver(mouseX, mouseY, Config.dpsHudX, Config.dpsHudY, dpsWidth, dpsHeight, Config.dpsHudScale)) {
                 graphics.fill(-2, -2, dpsWidth + 2, dpsHeight + 2, 0x44FFFFFF);
             }
